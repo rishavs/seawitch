@@ -1,0 +1,10 @@
+program         -> instruction* EOF;
+instruction     -> statement | expression ;
+statement       -> type_declr 
+                | var_declr;
+
+
+type_declr -> "type" space+ "=" type_expr "|" 
+
+type_expr -> type_unions_def | type_array_def | type_object_def | type_fun_def
+

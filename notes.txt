@@ -1,0 +1,6 @@
+to run;
+cls && tcc -Wall -Wextra -std=c99 -pedantic -Wmissing-prototypes -Wstrict-prototypes -Wold-style-definition -O -g src\seawitch.c -o bin\seawitch.exe && bin\seawitch.exe 
+cls && gcc cc -g3 -Wall -Wextra -Wconversion -Wdouble-promotion -Wno-unused-parameter -Wno-unused-function -Wno-sign-conversion -fsanitize=undefined -fsanitize-trap -o src\seawitch.c -o bin\seawitch.exe && bin\seawitch.exe
+cls && tcc -g3 -Wall -Wextra -Wconversion -Wdouble-promotion -Wno-unused-parameter -Wno-unused-function -Wno-sign-conversion -fsanitize=undefined src\seawitch.c -o bin\seawitch.exe && bin\seawitch.exe  
+
+cls && clang -g3 -Wall -Wextra -Wconversion -Wdouble-promotion -Wno-unused-parameter -Wno-unused-function -Wno-sign-conversion -fsanitize=undefined -std=c99 src\hexal.c -o "bin\seawitch.exe" && bin\seawitch.exe run "input\test.hex"

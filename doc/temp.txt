@@ -1,0 +1,4 @@
+the language should be fuully localized
+    - each keyword and operarator can be localized
+    - for each instruction, users can also define if it should be a prefix, suffix or infix, so as to make more sense in that language
+    - at compile time, we get the locale-lang of user and compile accordingly
