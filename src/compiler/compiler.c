@@ -1,4 +1,5 @@
 #include "common.h"
+#include "helpers.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,13 +25,20 @@ int compile_file (char* filepath) {
     List* tokenList = lex_file(content);
 
     // Access and print the tokens in the list
+    // showing in a tabular formar, cuz we are cool like that
+    printf("| %-5s | %-15s | %-20s | %-5s | %-5s |\n", "#", "Kind", "Value", "Pos", "Line");
+    printf("|-------|-----------------|----------------------|-------|-------|\n");
     for (size_t i = 0; i < tokenList->size; i++) {
         Hx_Token* token = (Hx_Token*)list_get(tokenList, i);
         if (token != NULL) {
-            printf("| kind=%d, value=%s, cursor=%lld, line=%d\n",
-                 token->kind, token->value, token->pos, token->line);
+            // if (strcmp(token->kind, "SPACE") != 0) {
+            printf("| %-5zu | %-15s | %-20s | %-5lld | %-5d |\n",
+                 i+1, token->kind, token->value, token->pos, token->line);
+            // }
         }
     }
+    printf("|-------|-----------------|----------------------|-------|-------|\n");
+
 
     // Clean up and free memory
     list_destroy(tokenList);

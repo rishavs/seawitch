@@ -22,7 +22,7 @@ typedef enum
 
 typedef struct Hx_Token
 {
-    Hx_Token_Kind   kind;
+    char*           kind;
     char*           value;
     fpos_t          pos;
     int             line;
@@ -53,25 +53,6 @@ typedef enum {
     // 
 
 } Hx_Compiler_Error_Types;
-
-// Define the array structure
-typedef struct {
-    void** data;     // Array of void pointers (references to items)
-    size_t size;     // Current number of items in the array
-    size_t capacity; // Maximum capacity of the array
-} List;
-
-// Function to create a new dynamic array with an initial capacity
-List* list_new(size_t initial_capacity);
-// Function to push an item (reference) into the dynamic array
-void list_push(List* array, void* item);
-// Function to pop an item (reference) from the dynamic array
-void* list_pop(List* array);
-// Function to get an item (reference) from the dynamic array by index
-void* list_get(const List* array, size_t index);
-// Function to destroy the dynamic array and free its memory
-void list_destroy(List* array);
-
 
 char* read_file (char* );
 List* lex_file(char* src);

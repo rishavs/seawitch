@@ -11,6 +11,7 @@ SET OUTPUT_EXECUTABLE=bin\seawitch.exe
 SET SOURCE_FILES= ^
     src\seawitch.c ^
     src\compiler\list.c ^
+    src\compiler\buffer.c ^
     src\compiler\compiler.c ^
     src\compiler\reader.c ^
     src\compiler\lexer.c 
