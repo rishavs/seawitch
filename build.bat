@@ -5,21 +5,21 @@ cls
 
 REM Define variables for source files, compiler, headers folder, and flags
 SET COMPILER=clang
-SET HEADERS_FOLDER=src\includes
+SET HEADERS_FOLDER=includes
 SET OUTPUT_EXECUTABLE=bin\seawitch.exe
 
-SET SOURCE_FILES= ^
-    src\seawitch.c ^
-    src\compiler\list.c ^
-    src\compiler\buffer.c ^
+SET SOURCE_FILES= src\seawitch.c ^
     src\compiler\compiler.c ^
     src\compiler\reader.c ^
     src\compiler\lexer.c 
 
-SET COMPILER_FLAGS= ^
-    -std=c99 ^
-    -Wall ^
-    -Wno-deprecated-declarations
+SET COMPILER_FLAGS=-std=c99 -Wno-unused-parameter -Wno-unused-function -Wno-sign-conversion -Wno-newline-eof -Wno-deprecated-declarations
+
+    @REM -pedantic -Wall -Wextra ^
+    @REM -Wconversion -Wdouble-promotion -Wnull-dereference -Wwrite-strings  ^
+    @REM -Wformat=2 -Wcast-align -Wswitch-enum ^
+    @REM -fsanitize=undefined -fsanitize-trap ^
+    @REM -Wno-deprecated-declarations -Wno-newline-eof 
 
 REM Compile the C code
 %COMPILER% %COMPILER_FLAGS% -I%HEADERS_FOLDER% %SOURCE_FILES% -o %OUTPUT_EXECUTABLE%
