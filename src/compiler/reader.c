@@ -2,46 +2,42 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "compiler.h"
+// #include "../seawitch.h"
 
-#include <stc/cstr.h>
+char *read_file(char *filepath)
+{
 
-cstr read_file (cstr filepath) {
-    FILE *file = fopen(cstr_str(&filepath), "r");
-
-    if (file == NULL) {
-        perror("Failed to open file");
-        exit(1);
+    // Open the file in read-only mode
+    FILE *file = fopen(filepath, "r");
+    if (!file)
+    {
+        printf("Failed to open file '%s'\n", filepath);
+        // return 1; -- TODO panic? log levels?
     }
 
-    // Calculate the file size
+    // Determine the file size
     fseek(file, 0, SEEK_END);
-    long file_size = ftell(file);
+    size_t file_size = ftell(file);
     fseek(file, 0, SEEK_SET);
 
-    // Allocate memory for the buffer to hold the file contents
-    // We have to do this a fread cannot handle cstr
-    char *buffer = (char *)malloc(file_size + 1); // +1 for null terminator
-
-    if (buffer == NULL) {
-        fprintf(stderr, "Memory allocation failed.\n");
+    // Allocate a string to hold the file contents
+    char *contents = calloc(1, (file_size + 1));
+    if (!contents)
+    {
+        printf("Failed to allocate memory for file contents\n");
         fclose(file);
-        exit(1);
+        // return 1;
     }
 
-    // Read the file contents into the buffer
-    size_t bytes_read = fread(buffer, 1, file_size, file);
-    buffer[bytes_read] = '\0'; // Null-terminate the buffer
+    // Read the file contents into the string
+    size_t bytes_read = fread(contents, 1, file_size, file);
 
-    // Close the file
+    // Make sure the string is null-terminated
+    contents[file_size] = '\0';
+
+    // Clean up
+    // free(contents);
     fclose(file);
 
-    // Create a cstr from the buffer
-    cstr content = cstr_from(buffer);
-
-    // Free the buffer
-    free(buffer);
-
-    // return the file content
-    return content;
+    return contents;
 }

@@ -1,7 +1,1 @@
--- handling floats 
---
-let myvariable = 1.23
--- handling exponents     --
-let x = 2.34e456
-let y = 700
-let var myvar2 = myvariable
+let x = 13

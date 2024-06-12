@@ -11,7 +11,8 @@ SET OUTPUT_EXECUTABLE=bin\seawitch.exe
 SET SOURCE_FILES= src\seawitch.c ^
     src\compiler\compiler.c ^
     src\compiler\reader.c ^
-    src\compiler\lexer.c 
+    src\compiler\lexer.c ^
+    src\compiler\parser.c 
 
 SET COMPILER_FLAGS=-std=c99 -Wno-unused-parameter -Wno-unused-function -Wno-sign-conversion -Wno-newline-eof -Wno-deprecated-declarations
 
