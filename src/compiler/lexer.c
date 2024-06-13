@@ -15,44 +15,44 @@ bool starts_with(char *src, size_t src_len, size_t i,  char* frag) {
     return true;
 }
 
-void push_token(Lexing_Result* lexer, Token token) {
-    if (lexer->tok_count >= lexer->tok_capacity) {
-        lexer->tok_capacity *= 2;
-        lexer->tokens = realloc(lexer->tokens, lexer->tok_capacity * sizeof(Token));
+void push_token(Tokens_List* lexer, Token token) {
+    if (lexer->count >= lexer->capacity) {
+        lexer->capacity *= 2;
+        lexer->tokens = realloc(lexer->tokens, lexer->capacity * sizeof(Token));
         if (lexer->tokens == NULL) { perror("realloc failed"); };
     }
-    lexer->tokens[lexer->tok_count] = token;
-    lexer->tok_count++;
+    lexer->tokens[lexer->count] = token;
+    lexer->count++;
 }
+// void push_token(Lexing_Result* lexer, Token token) {
+//     if (lexer)
+//     if (lexer->tok_count >= lexer->tok_capacity) {
+//         lexer->tok_capacity *= 2;
+//         lexer->tokens = realloc(lexer->tokens, lexer->tok_capacity * sizeof(Token));
+//         if (lexer->tokens == NULL) { perror("realloc failed"); };
+//     }
+//     lexer->tokens[lexer->tok_count] = token;
+//     lexer->tok_count++;
+// }
 
-void push_error(Lexing_Result* lexer, Compiler_Error error) {
-    if (lexer->err_count >= lexer->err_capacity) {
-        lexer->err_capacity *= 2;
-        lexer->errors = realloc(lexer->errors, lexer->err_capacity * sizeof(Compiler_Error));
-        if (lexer->errors == NULL) { perror("realloc failed"); };
-    }
-    lexer->errors[lexer->err_count] = error;
-    lexer->err_count++;
-}
 
-Lexing_Result lex_file(char *src) {
+Compiler_Errors_List lex_file(Tokens_List* result, char* src) {
+
     int src_len = strlen(src);
     int i = 0;
     int line = 1;
 
-    Lexing_Result result;
-    result.index = 0;
-    
-    result.tok_count = 0;
-    result.tok_capacity = 8;
+    result->count = 0;
+    result->capacity = 8;
+    result->tokens = calloc(result->capacity, sizeof(Token));
+    if (result->tokens == NULL) { perror("calloc failed"); };
 
-    result.err_count = 0;
-    result.err_capacity = 8;
+    Compiler_Errors_List errors_list;
+    errors_list.count = 0;
+    errors_list.capacity = 8;
+    errors_list.errors = calloc(errors_list.capacity, sizeof(Compiler_Error));
+    if (errors_list.errors == NULL) { perror("calloc failed"); };
     
-    result.tokens = calloc(result.tok_capacity, sizeof(Token));
-    result.errors = calloc(result.err_capacity, sizeof(Compiler_Error));
-    if (result.tokens == NULL || result.errors == NULL) { perror("calloc failed"); };
-
     while (i < src_len && src[i] != '\0') {
         // Handle whitespace
         if (src[i] == ' ' || src[i] == '\t' || src[i] == '\r') { i++; }
@@ -73,7 +73,7 @@ Lexing_Result lex_file(char *src) {
             token.value = NULL;
             token.atPos = i;
             token.atLine = line;
-            push_token(&result, token);
+            push_token(result, token);
             i += 2;
 
         // Handle identifiers
@@ -110,7 +110,7 @@ Lexing_Result lex_file(char *src) {
             }
             token.atPos = end;
             token.atLine = line;
-            push_token(&result, token);
+            push_token(result, token);
 
         // handle ints, decimals & scientific notations
         } else if (
@@ -160,7 +160,7 @@ Lexing_Result lex_file(char *src) {
             buffer[i - start] = '\0';
 
             token.value = buffer;
-            push_token(&result, token);
+            push_token(result, token);
           
         } else {
             // Raise Error
@@ -200,9 +200,9 @@ Lexing_Result lex_file(char *src) {
 
             // Append invalid value in buffer to error.message
             error.message = strcat(error.message, buffer);
-            push_error(&result, error);
+            push_error(result, error);
         }
     }  
 
-    return result;
+    return errors_list;
 };

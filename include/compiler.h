@@ -27,6 +27,15 @@ typedef struct Compiler_Error {
     int atLine;
 } Compiler_Error;
 
+typedef struct Compiler_Errors_List
+{
+    Compiler_Error* errors;
+    size_t count;
+    size_t capacity;
+} Compiler_Errors_List;
+
+void push_error(Compiler_Errors_List* , Compiler_Error );
+
 int compile_file(char* filepath);
 char* read_file(char*);
 
@@ -46,20 +55,7 @@ typedef struct Tokens_List
     size_t capacity;
 } Tokens_List;
 
-typedef struct Lexing_Result {
-    size_t index; 
-
-    Token* tokens;
-    size_t tok_count;
-    size_t tok_capacity;
-
-    Compiler_Error* errors;
-    size_t err_count;
-    size_t err_capacity;
-
-} Lexing_Result;
-
-Lexing_Result lex_file(char*);
+Compiler_Errors_List lex_file(Tokens_List*, char*);
 
 typedef struct Leaf {
     char* type;
@@ -77,18 +73,8 @@ typedef struct Leaf {
     size_t children_capacity;
 } Leaf;
 
-typedef struct Parsing_Result {
-    size_t index; 
+Compiler_Errors_List parse_file(Leaf*, Tokens_List*);
 
-    Leaf* ast;
-
-    Compiler_Error* errors;
-    size_t err_count;
-    size_t err_capacity;
-
-} Parsing_Result;
-
-Parsing_Result parse_file (Lexing_Result*);
 void print_ast(Leaf*);
 
 #endif

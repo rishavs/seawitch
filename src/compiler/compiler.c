@@ -7,11 +7,22 @@
 #include "../include/ast.h"
 #include "../include/compiler.h"
 
+void push_error(Compiler_Errors_List* errors , Compiler_Error error) {
+    if (errors->count >= errors->capacity) {
+        errors->capacity *= 2;
+        errors->errors = realloc(errors->errors, errors->capacity * sizeof(Compiler_Error));
+        if (errors->errors == NULL) { perror("realloc failed"); };
+    }
+    errors->errors[errors->count] = error;
+    errors->count++;
+}
+
 int compile_file(char* filepath) {
     // Calculate the time taken by fun()
     clock_t t;
     t = clock();
-   
+
+  
     // -------------------------------
     // Read File 
     // -------------------------------   
@@ -25,27 +36,32 @@ int compile_file(char* filepath) {
     // -------------------------------
     // Lex Source
     // -------------------------------
-    Lexing_Result lexer = lex_file(src);
+    Tokens_List tokens_list;
+    Compiler_Errors_List lex_errors = lex_file(&tokens_list, src);
+    if (lex_errors.count > 0) {
+        puts("Lexing failed");
+    }
+
     puts("----");
     printf("2. Lexing Source:\n----\n[\n");
-    printf("num tokens = %d\n", lexer.tok_count);
-    for (size_t i = 0; i < lexer.tok_count; i++) {
+    printf("num tokens = %d\n", tokens_list.count);
+    for (size_t i = 0; i < tokens_list.count; i++) {
         // if (tokens[i].type == 0) {break;};
         printf("    { type: %s, value: %s, atPos: %d, atLine: %d },\n", 
-            lexer.tokens[i].type, 
-            lexer.tokens[i].value, 
-            lexer.tokens[i].atPos, 
-            lexer.tokens[i].atLine
+            tokens_list.tokens[i].type, 
+            tokens_list.tokens[i].value, 
+            tokens_list.tokens[i].atPos, 
+            tokens_list.tokens[i].atLine
         );
     }
-    printf("num errors = %d\n", lexer.err_count);
-    for (size_t i = 0; i < lexer.err_count; i++) {
+    printf("num errors = %d\n", lex_errors.count);
+    for (size_t i = 0; i < lex_errors.count; i++) {
         // if (tokens[i].type == 0) {break;};
         printf("    { type: %s, message: %s, atPos: %d, atLine: %d },\n", 
-            lexer.errors[i].type, 
-            lexer.errors[i].message, 
-            lexer.errors[i].atPos, 
-            lexer.errors[i].atLine
+            lex_errors.errors[i].type, 
+            lex_errors.errors[i].message, 
+            lex_errors.errors[i].atPos, 
+            lex_errors.errors[i].atLine
         );
     }
 
@@ -58,8 +74,17 @@ int compile_file(char* filepath) {
     // -------------------------------
     // Parse Tokens
     // -------------------------------   
-    Parsing_Result parser = parse_file(&lexer);
-    print_ast(parser.ast);
+    Leaf ast;
+    Compiler_Errors_List parser_errors = parse_file(&ast, &tokens_list);
+    if (parser_errors.count > 0) {
+        puts("Parsing failed");
+    }
+    print_ast(&ast);
+    // Parsing skips if ILLEGAL token found or if enclosures are not found before end of file
+    // But till then parsing should happen and return all errors
+
+    // Parsing_Result parser = parse_file(&lexer);
+    // print_ast(parser.ast);
     // Parse tokens into AST
     // AST* ast = parse(tokens);
     // puts("----");

@@ -13,8 +13,7 @@ void push_leaf(Leaf* parent, Leaf* child) {
     parent->children_count++;
 }
 
-Parsing_Result parse_file (Lexing_Result* lexer) {
-    Leaf* root = calloc(1, sizeof(Leaf));
+Compiler_Errors_List parse_file(Leaf* root , Tokens_List* tokens_list) {
     root->type = "ROOT";
     root->expr = false;
     root->value = NULL;
@@ -28,13 +27,11 @@ Parsing_Result parse_file (Lexing_Result* lexer) {
     root->children = calloc(root->children_capacity, sizeof(Leaf*));
     if (root->children == NULL) { perror("calloc failed"); };
 
-    Parsing_Result result;
-    result.index = 0;
-    result.ast = root;
-    result.err_count = 0;
-    result.err_capacity = 8;
-    result.errors = calloc(result.err_capacity, sizeof(Compiler_Error));
-    if (result.errors == NULL) { perror("calloc failed"); };
+    Compiler_Errors_List errors_list;
+    errors_list.count = 0;
+    errors_list.capacity = 8;
+    errors_list.errors = calloc(errors_list.capacity, sizeof(Compiler_Error));
+    if (errors_list.errors == NULL) { perror("calloc failed"); };
 
     // Rest of your code...
 
@@ -61,7 +58,7 @@ Parsing_Result parse_file (Lexing_Result* lexer) {
     //     } 
     // }
 
-    return result;
+    return errors_list;
 }
 
 void print_ast(Leaf* root) {
