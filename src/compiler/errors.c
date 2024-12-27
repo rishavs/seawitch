@@ -1,3 +1,40 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "seawitch.h"
+
+// Primitive library function failed. Non-fatal error. Show error message and return false
+void* print_error_return_null(char* transpiler_file, size_t transpiler_line) {
+    fprintf(stderr, "\033[0;31m%s\n", "[ ERROR ] Primitive function failed");
+    perror("Internal Note");
+    fprintf(stderr, "Internal Note: Failure occurred in the compiler code at line %zu, in the file \"%s\"", transpiler_line, transpiler_file);
+    fprintf(stderr, "\n\033[0m");
+
+    return NULL;
+}
+
+// Primitive library function failed. Non-fatal error. Show error message and return false
+Bool print_error_return_false(char* transpiler_file, size_t transpiler_line) {
+    fprintf(stderr, "\033[0;31m%s\n", "[ ERROR ] Primitive function failed");
+    perror("Internal Note");
+    fprintf(stderr, "Internal Note: Failure occurred in the compiler code at line %zu, in the file \"%s\"", transpiler_line, transpiler_file);
+    fprintf(stderr, "\n\033[0m");
+
+    return false;
+}
+// Memory allocaltion failed. Fatal failure.
+void memory_allocation_failure(Int64 pos, Int64 line, char* filepath, char* transpiler_file, Int64 transpiler_line) {
+    fprintf(stderr, "\033[0;31m%s\n", "[ FATAL ] Memory Failure! Failed to allocate memory during compilation.");
+    if (pos && line && filepath) { // memory failures need not be tied to user code
+        fprintf(stderr, "Problem found at %zu:%zu in the file \"%s\"\n", pos, line, filepath);
+    };   
+    perror("Internal Note");
+    fprintf(stderr, "Internal Note: Failed occurred in the compiler code at line %zu, in the file \"%s\"", transpiler_line, transpiler_file);
+    fprintf(stderr, "\n\033[0m");
+    exit(EXIT_FAILURE);
+}
+
+
 // Here we will define all the compiler errors
 
 // Let's list all possible compiler error types

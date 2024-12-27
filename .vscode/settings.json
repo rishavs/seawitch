@@ -1,9 +1,13 @@
 {
     "files.associations": {
+        ".fantomasignore": "ignore",
         "stdio.h": "c",
         "common.h": "c",
         "compiler.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "compare": "cpp",
+        "type_traits": "cpp",
+        "seawitch.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }
