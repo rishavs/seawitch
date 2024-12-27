@@ -10,6 +10,8 @@
 #define INITIAL_CAPACITY 8
 #endif
 
+// TODO - all helper functions should also take in the index of the item
+
 // Create a new dynamic array.
 DynArray* dynarray_create(Types item_type, size_t item_size, size_t initial_capacity) {
     DynArray *dynarray = calloc(1, sizeof(DynArray));
@@ -59,15 +61,15 @@ Bool dynarray_pop(DynArray* dynarray, Gen_ref out) {
 }
 
 // Get the value at the index
-Bool dynarray_get(DynArray* dynarray, size_t index, Gen_ref out) {
-    if (!dynarray || !out) return print_error_return_false(__FILE__, __LINE__);
+Gen_ref dynarray_get(DynArray* dynarray, size_t index, Gen_ref out) {
+    if (!dynarray || !out) return print_error_return_null(__FILE__, __LINE__);
 
     // check if the index is out of bounds
-    if (index >= dynarray->len) return print_error_return_false(__FILE__, __LINE__);
+    if (index >= dynarray->len) return NULL;
 
     memcpy(out, (Byte *)dynarray->data + index * dynarray->item_size, dynarray->item_size);
 
-    return true;    
+    return out;    
 }
 
 // Set the value at the index
@@ -171,13 +173,12 @@ DynArray *dynarray_join(size_t n, ...) {
 // Can be used for both mapping and reducing. 
 // For mapping, the acc is another array
 // For reducing, the acc is any value type
-Bool dynarray_oneach(DynArray* dynarray, Gen_ref acc, void (*fn)(Gen_ref, Gen_ref)) {
+Bool dynarray_oneach(DynArray* dynarray, Gen_ref acc, void (*fn)(size_t, Gen_ref, Gen_ref)) {
     if (!dynarray || !fn || !acc) return print_error_return_false(__FILE__, __LINE__);
 
-    Gen_ref result = acc;
     for (size_t i = 0; i < dynarray->len; i++) {
         Gen_ref item = (Byte*)dynarray->data + i * dynarray->item_size;
-        fn(result, item);  // fn should modify result in place
+        fn(i, acc, item);  // fn should modify result in place
     }
 
     return true;

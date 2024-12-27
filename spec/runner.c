@@ -10,8 +10,8 @@ Test_Fun all_tests[] = {
     // push_str_chars_to_string,
     // get_substring,
 
-    empty_failed_test,
-
+    can_create_int_array_and_print,
+    can_push_and_pop_int_array,
     // End of tests
     NULL
 };

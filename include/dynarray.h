@@ -37,7 +37,7 @@ Bool dynarray_push(DynArray* dynarray, Gen_ref item);
 Bool dynarray_pop(DynArray* dynarray, Gen_ref out);
 
 // Get the value at the index
-Bool dynarray_get(DynArray* dynarray, size_t index, Gen_ref out);
+Gen_ref dynarray_get(DynArray* dynarray, size_t index, Gen_ref out);
 
 // Set the value at the index
 Bool dynarray_set (DynArray* dynarray, size_t index, Gen_ref item);
@@ -52,7 +52,7 @@ DynArray *dynarray_join(size_t n, ...);
 // Can be used for both mapping and reducing. or for printing.
 // For mapping, the acc is another array
 // For reducing, the acc is any value type
-Bool dynarray_oneach(DynArray* dynarray, Gen_ref acc, void (*fn)(Gen_ref, Gen_ref));
+Bool dynarray_oneach(DynArray* dynarray, Gen_ref acc, void (*fn)(size_t, Gen_ref, Gen_ref));
 
 // Filter function. Iterates over the dynarray and applies the predicate to each element.
 // Returns a new array with only thos elements that satisfy the predicate
