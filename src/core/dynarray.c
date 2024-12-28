@@ -28,7 +28,7 @@ DynArray* dynarray_create(Types item_type, size_t item_size, size_t initial_capa
     return dynarray;
 }
 
-Bool dynarray_push(DynArray* dynarray, Gen_ref item) {
+Bool dynarray_push(DynArray* dynarray, void* item) {
     if (!dynarray || !item) return print_error_return_false(__FILE__, __LINE__);
 
     if (dynarray->len == dynarray->capacity) {
@@ -47,11 +47,11 @@ Bool dynarray_push(DynArray* dynarray, Gen_ref item) {
     return true;
 }
 
-Bool dynarray_pop(DynArray* dynarray, Gen_ref out) {
+Bool dynarray_pop(DynArray* dynarray, void* out) {
     if (!dynarray || !out) return print_error_return_false(__FILE__, __LINE__);
 
     // If the dynarray is empty
-    if (dynarray->len == 0) return print_error_return_false(__FILE__, __LINE__);
+    if (dynarray->len == 0) return false;
 
     // Remove the last element from the dynarray
     memcpy(out, (Byte*)dynarray->data + (dynarray->len - 1) * dynarray->item_size, dynarray->item_size);  
@@ -61,7 +61,7 @@ Bool dynarray_pop(DynArray* dynarray, Gen_ref out) {
 }
 
 // Get the value at the index
-Gen_ref dynarray_get(DynArray* dynarray, size_t index, Gen_ref out) {
+void* dynarray_get(DynArray* dynarray, size_t index, void* out) {
     if (!dynarray || !out) return print_error_return_null(__FILE__, __LINE__);
 
     // check if the index is out of bounds
@@ -73,11 +73,11 @@ Gen_ref dynarray_get(DynArray* dynarray, size_t index, Gen_ref out) {
 }
 
 // Set the value at the index
-Bool dynarray_set (DynArray* dynarray, size_t index, Gen_ref item) {
+Bool dynarray_set (DynArray* dynarray, size_t index, void* item) {
     if (!dynarray || !item) return print_error_return_false(__FILE__, __LINE__);
 
     // If the index is out of bounds
-    if (index >= dynarray->len) return print_error_return_false(__FILE__, __LINE__);
+    if (index >= dynarray->len) return false;
 
     memcpy((Byte*)dynarray->data + index * dynarray->item_size, item, dynarray->item_size); 
 
@@ -89,7 +89,7 @@ DynArray* dynarray_slice(DynArray* dynarray, size_t start, size_t end) {
     if (!dynarray) return print_error_return_null(__FILE__, __LINE__);
 
     // Bounds checking
-    if (start >= dynarray->len || end < start || end >= dynarray->len) return print_error_return_null(__FILE__, __LINE__);
+    if (start >= dynarray->len || end < start || end >= dynarray->len) return NULL;
 
     // Calculate new length
     size_t new_len = end - start + 1;
@@ -169,15 +169,17 @@ DynArray *dynarray_join(size_t n, ...) {
     return joined_dynarray;
 }
 
+// TODO - also send length of the array
+
 // Run a function On Each item. Outcome of the operations are accumulated in the acc
 // Can be used for both mapping and reducing. 
 // For mapping, the acc is another array
 // For reducing, the acc is any value type
-Bool dynarray_oneach(DynArray* dynarray, Gen_ref acc, void (*fn)(size_t, Gen_ref, Gen_ref)) {
+Bool dynarray_oneach(DynArray* dynarray, void* acc, void (*fn)(size_t, void*, void*)) {
     if (!dynarray || !fn || !acc) return print_error_return_false(__FILE__, __LINE__);
 
     for (size_t i = 0; i < dynarray->len; i++) {
-        Gen_ref item = (Byte*)dynarray->data + i * dynarray->item_size;
+        void* item = (Byte*)dynarray->data + i * dynarray->item_size;
         fn(i, acc, item);  // fn should modify result in place
     }
 
@@ -186,14 +188,14 @@ Bool dynarray_oneach(DynArray* dynarray, Gen_ref acc, void (*fn)(size_t, Gen_ref
 
 // Filter function. Iterates over the dynarray and applies the predicate to each element.
 // Returns a new array with only thos elements that satisfy the predicate
-DynArray* dynarray_filter(DynArray* dynarray, bool (*predicate)(Gen_ref)) {
+DynArray* dynarray_filter(DynArray* dynarray, Bool (*predicate)(void*)) {
     if (!dynarray || !predicate) return print_error_return_null(__FILE__, __LINE__);
     
     DynArray* result = dynarray_create(dynarray->item_type, dynarray->item_size, dynarray->len);
     if (!result) return print_error_return_null(__FILE__, __LINE__);
     
     for (size_t i = 0; i < dynarray->len; i++) {
-        Gen_ref item = (Byte*)dynarray->data + i * dynarray->item_size;
+        void* item = (Byte*)dynarray->data + i * dynarray->item_size;
         if (predicate(item)) {
             dynarray_push(result, item);
         }
@@ -216,14 +218,14 @@ DynArray* dynarray_sort(DynArray* dynarray, int (*cmp)(const void *, const void 
     return result;
 }
 
-Bool dynarray_compare(DynArray* dynarray1, DynArray* dynarray2, Bool (*cmp)(Gen_ref, Gen_ref)) {
+Bool dynarray_compare(DynArray* dynarray1, DynArray* dynarray2, Bool (*cmp)(void*, void*)) {
     if (!dynarray1 || !dynarray2 || !cmp) return print_error_return_false(__FILE__, __LINE__);
 
     if (dynarray1->len != dynarray2->len) return false;
 
     for (size_t i = 0; i < dynarray1->len; i++) {
-        Gen_ref item1 = (Byte*)dynarray1->data + i * dynarray1->item_size;
-        Gen_ref item2 = (Byte*)dynarray2->data + i * dynarray2->item_size;
+        void* item1 = (Byte*)dynarray1->data + i * dynarray1->item_size;
+        void* item2 = (Byte*)dynarray2->data + i * dynarray2->item_size;
         if (!cmp(item1, item2)) return false;
     }
 
@@ -233,13 +235,12 @@ Bool dynarray_compare(DynArray* dynarray1, DynArray* dynarray2, Bool (*cmp)(Gen_
 Bool dynarray_has_subarray(DynArray* dynarray, size_t pos, DynArray* subarray) {
     if (!dynarray || !subarray) return print_error_return_false(__FILE__, __LINE__);
 
-    if (pos >= dynarray->len) return print_error_return_false(__FILE__, __LINE__);
-
-    if (subarray->len > dynarray->len - pos) return print_error_return_false(__FILE__, __LINE__);
+    if (pos >= dynarray->len) return false;
+    if (subarray->len > dynarray->len - pos) return false;
 
     for (size_t i = 0; i < subarray->len; i++) {
-        Gen_ref item1 = (Byte*)dynarray->data + (pos + i) * dynarray->item_size;
-        Gen_ref item2 = (Byte*)subarray->data + i * subarray->item_size;
+        void* item1 = (Byte*)dynarray->data + (pos + i) * dynarray->item_size;
+        void* item2 = (Byte*)subarray->data + i * subarray->item_size;
         if (memcmp(item1, item2, dynarray->item_size) != 0) return false;
     }
 
@@ -248,11 +249,11 @@ Bool dynarray_has_subarray(DynArray* dynarray, size_t pos, DynArray* subarray) {
 
 // Find the index of an item in the dynarray
 // Uses a comparison function to compare items
-Bool dynarray_find(DynArray* dynarray, size_t* out,  Gen_ref item, Bool (*cmp)(Gen_ref, Gen_ref)) {
+Bool dynarray_find(DynArray* dynarray, size_t* out,  void* item, Bool (*cmp)(void*, void*)) {
     if (!dynarray || !out || !item || !cmp) return print_error_return_false(__FILE__, __LINE__);
 
     for (size_t i = 0; i < dynarray->len; i++) {
-        Gen_ref current = (Byte*)dynarray->data + i * dynarray->item_size;
+        void* current = (Byte*)dynarray->data + i * dynarray->item_size;
         if (cmp(current, item)) {
             *out = i;
             return true;

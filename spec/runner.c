@@ -12,6 +12,17 @@ Test_Fun all_tests[] = {
 
     can_create_int_array_and_print,
     can_push_and_pop_int_array,
+    can_get_set_int_array,
+    can_slice_int_array,
+    can_join_multiple_int_arrays,
+    can_filter_int_array,
+    can_sort_int_array,
+    can_compare_int_arrays,
+    can_check_for_subarray,
+    can_find_item_in_array,
+    can_map_through_array,
+    can_reduce_array,
+
     // End of tests
     NULL
 };
