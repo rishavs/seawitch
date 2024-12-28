@@ -331,6 +331,7 @@ Test_Result can_check_for_subarray() {
     return res;
 }
 
+
 Test_Result can_find_item_in_array() {
     Test_Result res = { 
         .desc = string_create("can find an item in an array"),
@@ -424,6 +425,89 @@ Test_Result can_reduce_array() {
         res.passed = true;
     } else {
         res.passed = false;
+    }
+
+    return res;
+}
+
+Test_Result can_create_array_of_structs_as_values() {
+    Test_Result res = { 
+        .desc = string_create("can create an array of structs as values"),
+        .passed = false 
+    };
+
+    DynArray* arr = dynarray_create(GEN_REF, sizeof(Point), 8);
+    Point p1 = {1, 2};
+    Point p2 = {3, 4};
+    Point p3 = {5, 6};
+
+    dynarray_push(arr, (void*)&p1);
+    dynarray_push(arr, (void*)&p2);
+    dynarray_push(arr, (void*)&p3);
+
+    // make a change in a struct
+    p3.x = 500;
+    p3.y = 600;
+
+    void* p1_out = dynarray_get(arr, 0, &(Point){0, 0});
+    void* p2_out = dynarray_get(arr, 1, &(Point){0, 0});
+    void* p3_out = dynarray_get(arr, 2, &(Point){0, 0});
+
+    if (
+        arr->len == 3 &&
+        ((Point*)p1_out)->x == 1 && ((Point*)p1_out)->y == 2 &&
+        ((Point*)p2_out)->x == 3 && ((Point*)p2_out)->y == 4 &&
+        ((Point*)p3_out)->x == 5 && ((Point*)p3_out)->y == 6
+    ) {
+        res.passed = true;
+    } else {
+        res.passed = false;
+    }
+
+    return res;
+}
+Test_Result can_create_array_of_structs_as_refs() {
+    Test_Result res = {
+        .desc = string_create("can create an array of structs as refs"),
+        .passed = false
+    };
+
+    DynArray* arr = dynarray_create(GEN_REF, sizeof(Point*), 8);
+    Point* p1 = calloc(1, sizeof(Point));
+    p1->x = 1;
+    p1->y = 2;
+
+    Point* p2 = calloc(1, sizeof(Point));
+    p2->x = 3;
+    p2->y = 4;
+
+    Point* p3 = calloc(1, sizeof(Point));
+    p3->x = 5;
+    p3->y = 6;
+
+    dynarray_push(arr, (void*)p1);
+    dynarray_push(arr, (void*)p2);
+    dynarray_push(arr, (void*)p3);
+
+    // Make a change in the original struct AFTER pushing it into the array
+    p3->x = 500;
+    p3->y = 600;
+
+    Point* p1_out; // Declare as Point*
+    Point* p2_out;
+    Point* p3_out;
+
+    dynarray_get(arr, 0, &p1_out); // Get the POINTERS
+    dynarray_get(arr, 1, &p2_out);
+    dynarray_get(arr, 2, &p3_out);
+
+    if (
+        arr->len == 3 &&
+        p1_out->x == 1 && p1_out->y == 2 &&
+        p2_out->x == 3 && p2_out->y == 4 &&
+        p3_out->x == 500 && p3_out->y == 600
+    ) {
+        res.passed = true;
     }
 
     return res;

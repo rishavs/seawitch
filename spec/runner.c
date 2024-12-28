@@ -22,6 +22,8 @@ Test_Fun all_tests[] = {
     can_find_item_in_array,
     can_map_through_array,
     can_reduce_array,
+    can_create_array_of_structs_as_values,
+    can_create_array_of_structs_as_refs,
 
     // End of tests
     NULL
