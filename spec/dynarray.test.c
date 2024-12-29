@@ -69,7 +69,7 @@ Test_Result can_push_and_pop_int_array() {
     dynarray_push(arr, &(Int64){2});
 
     Int64 out1, out2;
-    dynarray_pop(arr, (void*)&out1);
+    dynarray_pop(arr, &out1);
 
     if (out1 == 2 && arr->len == 1) {
         res.passed = true;
@@ -441,23 +441,23 @@ Test_Result can_create_array_of_structs_as_values() {
     Point p2 = {3, 4};
     Point p3 = {5, 6};
 
-    dynarray_push(arr, (void*)&p1);
-    dynarray_push(arr, (void*)&p2);
-    dynarray_push(arr, (void*)&p3);
+    dynarray_push(arr, &p1);
+    dynarray_push(arr, &p2);
+    dynarray_push(arr, &p3);
 
     // make a change in a struct
     p3.x = 500;
     p3.y = 600;
 
-    void* p1_out = dynarray_get(arr, 0, &(Point){0, 0});
-    void* p2_out = dynarray_get(arr, 1, &(Point){0, 0});
-    void* p3_out = dynarray_get(arr, 2, &(Point){0, 0});
+    Point* p1_out = dynarray_get(arr, 0, &(Point){0, 0});
+    Point* p2_out = dynarray_get(arr, 1, &(Point){0, 0});
+    Point* p3_out = dynarray_get(arr, 2, &(Point){0, 0});
 
     if (
         arr->len == 3 &&
-        ((Point*)p1_out)->x == 1 && ((Point*)p1_out)->y == 2 &&
-        ((Point*)p2_out)->x == 3 && ((Point*)p2_out)->y == 4 &&
-        ((Point*)p3_out)->x == 5 && ((Point*)p3_out)->y == 6
+        p1_out->x == 1 && p1_out->y == 2 &&
+        p2_out->x == 3 && p2_out->y == 4 &&
+        p3_out->x == 5 && p3_out->y == 6
     ) {
         res.passed = true;
     } else {
@@ -485,9 +485,9 @@ Test_Result can_create_array_of_structs_as_refs() {
     p3->x = 5;
     p3->y = 6;
 
-    dynarray_push(arr, (void*)p1);
-    dynarray_push(arr, (void*)p2);
-    dynarray_push(arr, (void*)p3);
+    dynarray_push(arr, p1);
+    dynarray_push(arr, p2);
+    dynarray_push(arr, p3);
 
     // Make a change in the original struct AFTER pushing it into the array
     p3->x = 500;
