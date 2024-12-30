@@ -42,6 +42,8 @@ Bool dynarray_push(DynArray* dynarray, void* item) {
     }
 
     memcpy((Byte*)dynarray->data + dynarray->len * dynarray->item_size, item, dynarray->item_size);
+    if (!item) return print_error_return_false(__FILE__, __LINE__);
+
     dynarray->len++;
 
     return true;
@@ -54,7 +56,9 @@ Bool dynarray_pop(DynArray* dynarray, void* out) {
     if (dynarray->len == 0) return false;
 
     // Remove the last element from the dynarray
-    memcpy(out, (Byte*)dynarray->data + (dynarray->len - 1) * dynarray->item_size, dynarray->item_size);  
+    memcpy(out, (Byte*)dynarray->data + (dynarray->len - 1) * dynarray->item_size, dynarray->item_size);
+    if (!out) return print_error_return_false(__FILE__, __LINE__);
+
     dynarray->len--;
 
     return true;
@@ -65,9 +69,10 @@ void* dynarray_get(DynArray* dynarray, size_t index, void* out) {
     if (!dynarray || !out) return print_error_return_null(__FILE__, __LINE__);
 
     // check if the index is out of bounds
-    if (index >= dynarray->len) return NULL;
+    if (index >= dynarray->len) return false;
 
     memcpy(out, (Byte *)dynarray->data + index * dynarray->item_size, dynarray->item_size);
+    if (!out) return print_error_return_null(__FILE__, __LINE__);
 
     return out;    
 }
@@ -80,6 +85,7 @@ Bool dynarray_set (DynArray* dynarray, size_t index, void* item) {
     if (index >= dynarray->len) return false;
 
     memcpy((Byte*)dynarray->data + index * dynarray->item_size, item, dynarray->item_size); 
+    if (!item) return print_error_return_false(__FILE__, __LINE__);
 
     return true;
 }
@@ -106,6 +112,7 @@ DynArray* dynarray_slice(DynArray* dynarray, size_t start, size_t end) {
         (Byte*)dynarray->data + (start * dynarray->item_size),
         new_len * dynarray->item_size
     );
+    if (!new_dynarray->data) return print_error_return_null(__FILE__, __LINE__);
 
     return new_dynarray;
 }
@@ -161,6 +168,7 @@ DynArray *dynarray_join(size_t n, ...) {
                 dynarray->data, 
                 dynarray->len * item_size
             );
+            if (!dynarray->data) return print_error_return_null(__FILE__, __LINE__);
             offset += dynarray->len;
         }
     }
@@ -211,9 +219,11 @@ DynArray* dynarray_sort(DynArray* dynarray, int (*cmp)(const void *, const void 
     if (!result) return print_error_return_null(__FILE__, __LINE__);
 
     memcpy(result->data, dynarray->data, dynarray->len * dynarray->item_size);
-    result->len = dynarray->len;
+    if (!result->data) return print_error_return_null(__FILE__, __LINE__);
 
+    result->len = dynarray->len;
     qsort(result->data, result->len, result->item_size, cmp); // Call qsort directly
+    if (!result->data) return print_error_return_null(__FILE__, __LINE__);
 
     return result;
 }

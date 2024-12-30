@@ -235,10 +235,14 @@ Test_Result can_sort_int_array() {
 
     DynArray* sorted = dynarray_sort(arr, cmp);
 
+    Int64* out1 = dynarray_get(sorted, 0, &(Int64){0});
+    Int64* out2 = dynarray_get(sorted, 1, &(Int64){0});
+    Int64* out3 = dynarray_get(sorted, 2, &(Int64){0});
+
     if (sorted->len == 3 &&
-        *(Int64*)dynarray_get(sorted, 0, &(Int64){0}) == 1 &&
-        *(Int64*)dynarray_get(sorted, 1, &(Int64){0}) == 3 &&
-        *(Int64*)dynarray_get(sorted, 2, &(Int64){0}) == 5
+        *out1 == 1 &&
+        *out2 == 3 &&
+        *out3 == 5
     ) {
         res.passed = true;
     } else {
@@ -385,13 +389,19 @@ Test_Result can_map_through_array() {
 
     dynarray_oneach(arr, (DynArray*)new_arr, fn);
 
+    Int64* out1 = dynarray_get(new_arr, 0, &(Int64){0});
+    Int64* out2 = dynarray_get(new_arr, 1, &(Int64){0});
+    Int64* out3 = dynarray_get(new_arr, 2, &(Int64){0});
+    Int64* out4 = dynarray_get(new_arr, 3, &(Int64){0});
+    Int64* out5 = dynarray_get(new_arr, 4, &(Int64){0});
+
     if (
         new_arr->len == 5 &&
-        *(Int64*)dynarray_get(new_arr, 0, &(Int64){0}) == 2 &&
-        *(Int64*)dynarray_get(new_arr, 1, &(Int64){0}) == 4 &&
-        *(Int64*)dynarray_get(new_arr, 2, &(Int64){0}) == 6 &&
-        *(Int64*)dynarray_get(new_arr, 3, &(Int64){0}) == 8 &&
-        *(Int64*)dynarray_get(new_arr, 4, &(Int64){0}) == 10
+        *out1 == 2 &&
+        *out2 == 4 &&
+        *out3 == 6 &&
+        *out4 == 8 &&
+        *out5 == 10
     ) {
         res.passed = true;
     } else {
@@ -489,15 +499,14 @@ Test_Result can_create_array_of_structs_as_refs() {
     dynarray_push(arr, p2);
     dynarray_push(arr, p3);
 
-    // Make a change in the original struct AFTER pushing it into the array
     p3->x = 500;
     p3->y = 600;
 
-    Point* p1_out; // Declare as Point*
+    Point* p1_out; // Declare as Point* (no initialization needed here)
     Point* p2_out;
     Point* p3_out;
 
-    dynarray_get(arr, 0, &p1_out); // Get the POINTERS
+    dynarray_get(arr, 0, &p1_out); // Pass the ADDRESS of the Point* variables
     dynarray_get(arr, 1, &p2_out);
     dynarray_get(arr, 2, &p3_out);
 
@@ -509,6 +518,5 @@ Test_Result can_create_array_of_structs_as_refs() {
     ) {
         res.passed = true;
     }
-
     return res;
 }
