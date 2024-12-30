@@ -476,37 +476,42 @@ Test_Result can_create_array_of_structs_as_values() {
 
     return res;
 }
+
+
 Test_Result can_create_array_of_structs_as_refs() {
     Test_Result res = {
         .desc = string_create("can create an array of structs as refs"),
         .passed = false
     };
 
+    // Create array to store Point pointers
     DynArray* arr = dynarray_create(GEN_REF, sizeof(Point*), 8);
-    Point* p1 = calloc(1, sizeof(Point));
-    p1->x = 1;
-    p1->y = 2;
 
-    Point* p2 = calloc(1, sizeof(Point));
-    p2->x = 3;
-    p2->y = 4;
+    // Allocate and initialize points
+    Point* p1 = malloc(sizeof(Point));  // Changed from calloc for clarity
+    *p1 = (Point){1, 2};               // Direct initialization
+    
+    Point* p2 = malloc(sizeof(Point));
+    *p2 = (Point){3, 4};
+    
+    Point* p3 = malloc(sizeof(Point));
+    *p3 = (Point){5, 6};
 
-    Point* p3 = calloc(1, sizeof(Point));
-    p3->x = 5;
-    p3->y = 6;
+    // Push pointers to the points into array
+    dynarray_push(arr, &p1);  // Note: pushing address of the pointer
+    dynarray_push(arr, &p2);
+    dynarray_push(arr, &p3);
 
-    dynarray_push(arr, p1);
-    dynarray_push(arr, p2);
-    dynarray_push(arr, p3);
-
+    // Make a change in the original struct
     p3->x = 500;
     p3->y = 600;
 
-    Point* p1_out; // Declare as Point* (no initialization needed here)
-    Point* p2_out;
-    Point* p3_out;
-
-    dynarray_get(arr, 0, &p1_out); // Pass the ADDRESS of the Point* variables
+    // Get pointers back out
+    Point* p1_out = NULL;
+    Point* p2_out = NULL;
+    Point* p3_out = NULL;
+    
+    dynarray_get(arr, 0, &p1_out);  // Get pointer from array into p1_out
     dynarray_get(arr, 1, &p2_out);
     dynarray_get(arr, 2, &p3_out);
 
@@ -518,5 +523,6 @@ Test_Result can_create_array_of_structs_as_refs() {
     ) {
         res.passed = true;
     }
+
     return res;
 }
