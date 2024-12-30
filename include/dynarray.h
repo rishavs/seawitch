@@ -22,9 +22,9 @@
 typedef struct {
     Byte*       data; //data is stored as bytes
     Types       item_type;
-    size_t       item_size;
-    size_t       len;
-    size_t       capacity;
+    size_t      item_size;
+    size_t      len;
+    size_t      capacity;
 } DynArray; // dynarray owns the data
 
 // Create a new dynamic array.
