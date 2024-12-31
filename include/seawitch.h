@@ -58,13 +58,11 @@ typedef struct {
     Int64   len;
     Int64   capacity;
 } DynString;
-// typedef struct {
-//     Int64   len;
-//     char    data[FIXED_STRING_SIZE];
-// } FxString;
-
-typedef char FxString[FIXED_STRING_SIZE];
-
+typedef struct {
+    Int64   len;
+    char    data[FIXED_STRING_SIZE];
+} FxString;
+FxString fxstring_do_from_chars(char* frag);
 
 // Error uses fixed strings to avoid dynamic memory allocation
 typedef struct {
@@ -94,6 +92,8 @@ typedef struct {
 
 DEFINE_RESULT(Int64, int64)
 DEFINE_RESULT(Bool, bool)
+DEFINE_RESULT(Float64, float64)
+DEFINE_RESULT(FxString, fxstring)
 DEFINE_RESULT(DynString*, dynstring)
     
 #endif

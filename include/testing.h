@@ -6,8 +6,8 @@
 #include "seawitch.h"
 
 typedef struct Test_Result {
-    DynString* desc;
-    Bool passed;
+    FxString desc;
+    Result_with_bool result;
 } Test_Result;
 
 // Define the function pointer type

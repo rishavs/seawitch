@@ -5,11 +5,28 @@
 
 // Import the tests
 // #include "dynarray.test.c"
-#include "dynstring.test.c"
+// #include "dynstring.test.c"
+
+// Dummy tests
+Test_Result must_pass () {
+    return (Test_Result) { 
+        .result = { .ok = true }, 
+        .desc = fxstring_do_from_chars("DUMMY: This test must Pass") 
+    };
+}
+
+Test_Result must_fail () {
+    return (Test_Result) { 
+        .result = { .ok = false }, 
+        .desc = fxstring_do_from_chars("DUMMY: This test must Fail") 
+    };
+}
 
 // Create an array of the tests
 Test_Fun all_tests[] = {
-    create_basic_dynstring,
+    must_pass,
+    must_fail,
+    // create_basic_dynstring,
     // basic_string_create,
     // push_str_chars_to_string,
     // get_substring,
@@ -43,12 +60,17 @@ int main() {
     printf("Running Tests ...\n");
     printf("----------------------------------------------------\n");
     while (all_tests[i] != NULL) {
-        Test_Result res = all_tests[i]();
-        if (res.passed) {
-            printf("\033[0;32m%lli: \t[ PASSED ]\t%s\n\033[0m", i, res.desc->data); // Green color for PASS
+        Test_Result test = all_tests[i]();
+        if (test.result.ok) {
+            printf("\033[0;32m%lli: \t[ PASSED ]\t%s\n\033[0m", i, test.desc.data); // Green color for PASS
             passed_count++;
         } else {
-            printf("\033[0;31m%lli:\t[ FAILED ]\t%s\n\033[0m", i, res.desc->data);
+            printf("\033[0;31m%lli:\t[ FAILED ]\t%s\n\033[0m", i, test.desc.data);
+
+            // If there is also an error message, print it
+            if (test.result.error.message.len > 0) {
+                printf("\033[0;31m\t\t%s\n\033[0m", test.result.error.message.data);
+            }
         }
         i++;
     }
