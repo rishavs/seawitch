@@ -62,7 +62,7 @@ typedef struct {
     Int64   len;
     char    data[FIXED_STRING_SIZE];
 } FxString;
-FxString fxstring_do_from_chars(char* frag);
+FxString fxstring_do_from_chars(char* frag, Bool truncate_at_beginning);
 
 // Error uses fixed strings to avoid dynamic memory allocation
 typedef struct {

@@ -11,15 +11,11 @@ SET TEST_EXECUTABLE=bin\test
 SET MAIN_FILE=src\seawitch.c
 SET TEST_FILE=spec\runner.c
 
-SET SOURCE_FILES= ^
-    src\errors.c ^
+SET SOURCE_FILES=src\core\errors.c ^
     src\core\fxstring.c
     
-
     @REM src\core\dynstring.c 
-
     @REM src\core\dynarray.c
-
     @REM src\seawitch.c ^
     @REM src\compiler\compiler.c ^
     @REM src\compiler\reader.c ^
@@ -37,7 +33,7 @@ SET COMPILER_FLAGS= -Wall -Wextra ^
     REM -Wno-deprecated-declarations -Wno-newline-eof 
 
 REM Cleanup the previous build
-del %TEST_EXECUTABLE%.exe
+@REM del %TEST_EXECUTABLE%.exe
 
 REM Compile the C code
 %COMPILER% %COMPILER_FLAGS% -I%HEADERS_FOLDER% %TEST_FILE% %SOURCE_FILES% -o %TEST_EXECUTABLE%

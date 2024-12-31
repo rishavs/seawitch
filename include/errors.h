@@ -42,18 +42,15 @@
 
 // };
 
-
-// // FATAL! Print error message and exit
-// void fatal(Outcome code, Int64 line, FxString filepath);
-
-// // Print error message and continue
-// void yell_at_clouds(Outcome code, Int64 line, FxString filepath);
-
 // FATAL! Print error message and exit
 void fatal(Error err, FxString filepath, Int64 line);
 
 // Print error message and continue
 void yell(Error err, FxString filepath, Int64 line);
+
+// Create a minimal error object
+Error snitch (char* msg, Int64 line, char* filepath);
+
 
 // // Some pre built error messages
 // // throw memory allocation failure and exit

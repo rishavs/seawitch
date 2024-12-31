@@ -7,44 +7,38 @@
 #include "seawitch.h"
 
 // Build a short error object
-Error snitch (FxString msg, Int64 line, FxString filepath) {
-    Error err = { .message = msg };
-    if (line)       err.line = line;
-    if (filepath.len > 0)   strncpy(err.filepath, filepath, filepath.len);
-    return err;
-}
-
-// Print error message and exit
-void fatal(Error err, FxString filepath, Int64 line) {
-    fprintf(stderr, "\033[0;31m");
-    perror("[ FATAL ]");
-    fprintf(stderr, "Error Name: %s\n", err.name.data);
-    fprintf(stderr, "Error Message: %s\n", err.message.data);
-    
-    if (err.details) fprintf(stderr, "Error Details: %s\n", err.details.data);
-    if (err.hint) fprintf(stderr, "Error Hint: %s\n", err.hint.data);
-
-    if (err.hint) fprintf(stderr, "Error Position: %zu:%zu\n", err.line, err.pos);
-    if (err.hint) fprintf(stderr, "Error File: %s\n", filepath.data);
-
-    fprintf(stderr, "\n\033[0m");
-    exit(EXIT_FAILURE);
+Error snitch(char* msg, Int64 line, char* filepath) {
+    return (Error){ 
+        .message = fxstring_do_from_chars(msg, false),
+        .line = line,
+        .filepath = fxstring_do_from_chars(filepath, false)
+    };
 }
 
 // Print error message and continue
 void yell(Error err, FxString filepath, Int64 line) {
     fprintf(stderr, "\033[0;31m");
-    perror("[ ERROR ]");
+    perror("[ FATAL ]");
     fprintf(stderr, "Error Name: %s\n", err.name.data);
     fprintf(stderr, "Error Message: %s\n", err.message.data);
     
-    if (err.details) fprintf(stderr, "Error Details: %s\n", err.details.data);
-    if (err.hint) fprintf(stderr, "Error Hint: %s\n", err.hint.data);
+    if (err.details.len > 0) fprintf(stderr, "Error Details: %s\n", err.details.data);
+    if (err.hint.len > 0) fprintf(stderr, "Error Hint: %s\n", err.hint.data);
 
-    if (err.hint) fprintf(stderr, "Error Position: %zu:%zu\n", err.line, err.pos);
-    if (err.hint) fprintf(stderr, "Error File: %s\n", filepath.data);
+    if (
+        err.pos > 0 && 
+        err.line > 0
+    ) fprintf(stderr, "Error Position: %zu:%zu\n", err.line, err.pos);
+
+    if (err.filepath.len > 0) fprintf(stderr, "Error File: %s\n", filepath.data);
 
     fprintf(stderr, "\n\033[0m");
+}
+
+// Print error message and exit
+void fatal(Error err, FxString filepath, Int64 line) {
+    yell(err, filepath, line);
+    exit(EXIT_FAILURE);
 }
 
 // // Create a new error

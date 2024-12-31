@@ -3,45 +3,39 @@ CC = tcc
 CFLAGS = -std=c99 -Wall
 
 # Source files, header files, and output executable
-SRC_DIR = src
-INC_DIR = include
-EXE_DIR = bin
-
-# main header file
-HDR = $(SRC_DIR)/seawitch.h 
+SRC_DIR 			= src
+TEST_DIR 			= test
+INCLUDE_DIR 		= include
+BIN_DIR 			= bin
+PROJECT_EXECUTABLE 	= $(BIN_DIR)/seawitch
+TEST_EXECUTABLE 	= $(BIN_DIR)/test
+PROJECT_ENTRYPOINT 	= $(SRC_DIR)/seawitch.c
+TEST_ENTRYPOINT 	= $(TEST_DIR)/runner.c
 
 # List of source files (each file on a new line)
 SRC = \
-    $(SRC_DIR)/seawitch.c \
-    $(SRC_DIR)/compiler/compiler.c 
+    $(SRC_DIR)/errors.c \
+    $(SRC_DIR)/core/fxstring.c 
 
-# Header files to consider for dependencies
-INCLUDES = $(wildcard $(HDR_DIR)/*.h)
+# Targets
 
-# Output executable
-EXE = $(EXE_DIR)/seawitch.exe
+all: build
 
-# Clear screen command
-CLEAR = clear  # Use 'cls' on Windows
+run: build
+	$(PROJECT_EXECUTABLE)
 
-# Build target
-all: run
+build: $(PROJECT_EXECUTABLE)
 
-# Build the executable
-$(EXE): $(SRC) $(HDR) $(INCLUDES)
-	@$(CLEAR)
-	$(CC) $(CFLAGS) -o $@ $(SRC)
+$(PROJECT_EXECUTABLE): $(SRC) $(PROJECT_ENTRYPOINT)
+	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) $(SRC) $(PROJECT_ENTRYPOINT) -o $(PROJECT_EXECUTABLE)
 
-# Run the executable
-run: $(EXE)
-	@$(CLEAR)
-	./$(EXE)
+test: $(TEST_EXECUTABLE)
+	$(TEST_EXECUTABLE)
+	
+$(TEST_EXECUTABLE): $(SRC) $(TEST_ENTRYPOINT)
+    $(CC) $(CFLAGS) -I$(INCLUDE_DIR) $(SRC) $(TEST_ENTRYPOINT) -o $(TEST_EXECUTABLE)
 
-# Build the executable without clearing the screen
-build: $(EXE)
-
-# Clean the project
 clean:
-	rm -f $(EXE)
+	rm -f $(PROJECT_EXECUTABLE) $(TEST_EXECUTABLE)
 
 .PHONY: all run build clean
