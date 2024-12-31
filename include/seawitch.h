@@ -77,15 +77,15 @@ typedef struct {
     Int64       column;                 // Error column number provided by user. Optional
     FxString    filepath;               // Error file path provided by user. Optional
     
-    Int64       raised_at_line;         // Internal compilar path for error.
-    FxString    raised_at_filepath;     // Internal compilar path for error.
+    Int64       raised_on_line;         // Internal compilar path for error.
+    FxString    raised_in_file;         // Internal compilar path for error.
 } Error;
 
 #define DEFINE_RESULT(type, name) \
     typedef struct { \
         Bool    ok; \
         union { \
-            type    data; \
+            type    value; \
             Error   error; \
         }; \
     } Result_with_##name; 
@@ -94,6 +94,6 @@ DEFINE_RESULT(Int64, int64)
 DEFINE_RESULT(Bool, bool)
 DEFINE_RESULT(Float64, float64)
 DEFINE_RESULT(FxString, fxstring)
-DEFINE_RESULT(DynString*, dynstring)
+DEFINE_RESULT(DynString, dynstring)
     
 #endif

@@ -7,7 +7,8 @@
 
 typedef struct Test_Result {
     FxString desc;
-    Result_with_bool result;
+    Bool passed;
+    Outcome out;
 } Test_Result;
 
 // Define the function pointer type

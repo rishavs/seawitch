@@ -6,7 +6,8 @@
 #include "errors.h"
 #include "seawitch.h"
 
-// Build a short error object
+
+// Build a short error object with minimal ceremony
 Error snitch(char* msg, Int64 line, char* filepath) {
     return (Error){ 
         .message = fxstring_do_from_chars(msg, false),
@@ -16,9 +17,9 @@ Error snitch(char* msg, Int64 line, char* filepath) {
 }
 
 // Print error message and continue
-void yell(Error err, FxString filepath, Int64 line) {
+void yell(Error err) {
     fprintf(stderr, "\033[0;31m");
-    perror("[ FATAL ]");
+    perror("[ ERROR ]");
     fprintf(stderr, "Error Name: %s\n", err.name.data);
     fprintf(stderr, "Error Message: %s\n", err.message.data);
     
@@ -28,16 +29,18 @@ void yell(Error err, FxString filepath, Int64 line) {
     if (
         err.pos > 0 && 
         err.line > 0
-    ) fprintf(stderr, "Error Position: %zu:%zu\n", err.line, err.pos);
+    ) fprintf(stderr, "Error Position: %lli:%lli\n", err.line, err.pos);
+    if (err.filepath.len > 0) fprintf(stderr, "Error File: %s\n", err.filepath.data);
 
-    if (err.filepath.len > 0) fprintf(stderr, "Error File: %s\n", filepath.data);
+    if (err.raised_on_line > 0)     fprintf(stderr, "Raised on line: %lli\n", err.raised_on_line);
+    if (err.raised_in_file.len > 0) fprintf(stderr, "Raised in file: %s\n", err.raised_in_file.data);
 
     fprintf(stderr, "\n\033[0m");
 }
 
 // Print error message and exit
-void fatal(Error err, FxString filepath, Int64 line) {
-    yell(err, filepath, line);
+void fatal(Error err) {
+    yell(err);
     exit(EXIT_FAILURE);
 }
 

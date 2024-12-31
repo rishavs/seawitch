@@ -12,21 +12,16 @@
 Test_Result must_pass () {
     return (Test_Result) { 
         .desc = fxstring_do_from_chars("DUMMY: This test must Pass", false),
-        .result = { .ok = true }, 
+        .passed = true,
+        .out = OUT_OK
     };
 }
 
 Test_Result must_fail () {
     return (Test_Result) { 
         .desc = fxstring_do_from_chars("DUMMY: This test must Fail", false) ,
-        .result = { 
-            .ok = false, 
-            .error = {
-                .message = fxstring_do_from_chars("This is an error message", false),
-                .line = __LINE__,
-                .filepath = fxstring_do_from_chars(__FILE__, true)
-            }
-        }, 
+        .passed = false, 
+        .out = OUT_NULL_INPUT
     };
 }
 
@@ -69,15 +64,16 @@ int main() {
     printf("----------------------------------------------------\n");
     while (all_tests[i] != NULL) {
         Test_Result test = all_tests[i]();
-        if (test.result.ok) {
+        if (test.passed) {
             printf("\033[0;32m%lli: \t[ PASSED ]\t%s\n\033[0m", i, test.desc.data); // Green color for PASS
             passed_count++;
         } else {
             printf("\033[0;31m%lli:\t[ FAILED ]\t%s\n\033[0m", i, test.desc.data);
 
             // If there is also an error message, print it
-            if (test.result.error.message.len > 0) {
-                printf("\033[0;31m\t\t\t-- Error: %s\n\033[0m", test.result.error.message.data);
+            if (test.out != OUT_OK) {
+                printf("\033[0;31m\t\t\t-- Error: %s\n\033[0m", Outcome_message[test.out]);
+                // yell(test.result.error);
             }
         }
         i++;

@@ -33,17 +33,14 @@
 
 // create a new string and check length
 Test_Result create_basic_dynstring() {
-    Test_Result res;
-    res.desc = calloc(1, sizeof(DynString));
-    if (dynstring_do_create(res.desc, "Hello, World!") != OUT_OK) {
-        yell_at_clouds(OUT_MEMORY_ERROR, __LINE__, __FILE__);
-        return res;
-    }
-    res.passed = false;
-
+    Test_Result res = { 
+        .desc = fxstring_do_from_chars("can create a basic string", false),
+        .passed = false 
+    };
+    
     DynString* str = calloc(1, sizeof(DynString));
     if (dynstring_do_create(str, "Hello, World!") != OUT_OK) {
-        yell_at_clouds(OUT_MEMORY_ERROR, __LINE__, __FILE__);
+        res.error = snitch("Failed to create string", __LINE__, __FILE__);
         return res;
     }
 

@@ -8,49 +8,43 @@
 
 #include "seawitch.h"
 
-// // Defined a light Outcome type for simple error handling
-// // May discard in favor of a proper Result type later on
-// typedef enum {
-//     // Special types
-//     OUT_OK,    // General success case. OK AND TRUE
-//     OUT_OK_AND_FALSE, // Success with inequality result
+// Defined a light Outcome type for simple error handling
+// May discard in favor of a proper Result type later on
+typedef enum {
+    // Success
+    OUT_OK, 
 
-//     // System errors
-//     OUT_MEMORY_ERROR,
-//     OUT_INTEGER_OVERFLOW,
+    // System errors
+    OUT_MEMORY_ERROR,
+    OUT_INTEGER_OVERFLOW,
 
-//     // User errors
-//     OUT_NULL_INPUT,
-//     OUT_INVALID_INPUT,
+    // User errors
+    OUT_NULL_INPUT,
+    OUT_INVALID_INPUT,
 
-//     // ...
+    // ...
 
-//     // Bookkeeping
-//     OUT_COUNT
-// } Outcome;
+    // Bookkeeping
+    OUT_COUNT
+} Outcome;
 
-// // Generate the string array using the macro
-// static const char* Outcome_message[OUT_COUNT] = {
-//     [OUT_OK]                = "[SUCCESS] No Errors",
-//     [OUT_OK_AND_FALSE]      = "[SUCCESS] No Errors, but false outcome",
+// Generate the string array using the macro
+static const char* Outcome_message[OUT_COUNT] = {
+    [OUT_OK]                = "[SUCCESS]",
 
-//     [OUT_MEMORY_ERROR]      = "[FATAL] Memory Allocation Failure",
-//     [OUT_INTEGER_OVERFLOW]  = "[FATAL] Integer Overflow",
-//     [OUT_NULL_INPUT]        = "[FATAL] Null Input",
+    [OUT_MEMORY_ERROR]      = "[FATAL] Memory Allocation Failure",
+    [OUT_INTEGER_OVERFLOW]  = "[FATAL] Integer Overflow",
+    [OUT_NULL_INPUT]        = "[FATAL] Null Input",
 
-//     [OUT_INVALID_INPUT]     = "[ERROR] Invalid Input",
+    [OUT_INVALID_INPUT]     = "[ERROR] Invalid Input",
 
-// };
-
-// FATAL! Print error message and exit
-void fatal(Error err, FxString filepath, Int64 line);
+};
 
 // Print error message and continue
-void yell(Error err, FxString filepath, Int64 line);
+void yell(Error err);
 
-// Create a minimal error object
-Error snitch (char* msg, Int64 line, char* filepath);
-
+// FATAL! Print error message and exit
+void fatal(Error err);
 
 // // Some pre built error messages
 // // throw memory allocation failure and exit
