@@ -58,36 +58,42 @@ typedef struct {
     Int64   len;
     Int64   capacity;
 } DynString;
-typedef struct {
-    Int64   len;
-    char    data[FIXED_STRING_SIZE];
-} FxString;
-
-// // Error uses fixed strings to avoid dynamic memory allocation
 // typedef struct {
-//     Result_codes category;              // Error category. May replace with enum later
-//     FxString    message;                // Error message
+//     Int64   len;
+//     char    data[FIXED_STRING_SIZE];
+// } FxString;
 
-//     FxString    name;                   // Error header. Optional
-//     FxString    details;                // Optional
-//     FxString    hint;                   // Optional
+typedef char FxString[FIXED_STRING_SIZE];
 
-//     Int64       pos;                    // Error position provided by user. Optional
-//     Int64       line;                   // Error line number provided by user. Optional
-//     Int64       column;                 // Error column number provided by user. Optional
-//     FxString    filepath;               // Error file path provided by user. Optional
+
+// Error uses fixed strings to avoid dynamic memory allocation
+typedef struct {
+    FxString    message;                // Error message
+
+    FxString    name;                   // Error header. Optional
+    FxString    details;                // Optional
+    FxString    hint;                   // Optional
+
+    Int64       pos;                    // Error position provided by user. Optional
+    Int64       line;                   // Error line number provided by user. Optional
+    Int64       column;                 // Error column number provided by user. Optional
+    FxString    filepath;               // Error file path provided by user. Optional
     
-//     Int64       raised_at_line;         // Internal compilar path for error.
-//     FxString    raised_at_filepath;     // Internal compilar path for error.
-// } Error;
+    Int64       raised_at_line;         // Internal compilar path for error.
+    FxString    raised_at_filepath;     // Internal compilar path for error.
+} Error;
 
-// #define DEFINE_RESULT(type, name) \
-//     typedef struct { \
-//         Bool    ok; \
-//         union { \
-//             type    data; \
-//             Error   error; \
-//         }; \
-//     } Result_with_##name##; \
+#define DEFINE_RESULT(type, name) \
+    typedef struct { \
+        Bool    ok; \
+        union { \
+            type    data; \
+            Error   error; \
+        }; \
+    } Result_with_##name; 
+
+DEFINE_RESULT(Int64, int64)
+DEFINE_RESULT(Bool, bool)
+DEFINE_RESULT(DynString*, dynstring)
     
 #endif
