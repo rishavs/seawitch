@@ -4,5 +4,5 @@
 #include "seawitch.h"
 
 String* bool_do_to_string(Bool value) {
-    return string_create(value ? "true" : "false");
+    return dynstring_create(value ? "true" : "false");
 }

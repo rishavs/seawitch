@@ -8,7 +8,7 @@
 // Null input
 Test_Result empty_failed_test() {
     Test_Result res = { 
-        .desc = dyn_string_do_init("empty failed test"),
+        .desc = dyn_dynstring_do_init("empty failed test"),
         .passed = false 
     };
 
@@ -17,7 +17,7 @@ Test_Result empty_failed_test() {
 
 Test_Result empty_passed_test() {
     Test_Result res = { 
-        .desc = dyn_string_do_init("empty passed test"),
+        .desc = dyn_dynstring_do_init("empty passed test"),
         .passed = false 
     };
     res.passed = true;
@@ -27,14 +27,14 @@ Test_Result empty_passed_test() {
 
 Test_Result simple_var_declaration_as_int() {
     Test_Result res = { 
-        .desc = dyn_string_do_init("simple var declaration as int"),
+        .desc = dyn_dynstring_do_init("simple var declaration as int"),
         .passed = false 
     };
 
     // Transpile the source
     Transpiler_ctx_t* ctx = transpiler_ctx_do_init(
-        dyn_string_do_init("specs/basic.test.c"),
-        dyn_string_do_init("let x = 3\n let y = 13")
+        dyn_dynstring_do_init("specs/basic.test.c"),
+        dyn_dynstring_do_init("let x = 3\n let y = 13")
     );
     
     transpile_file(ctx);

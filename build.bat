@@ -13,8 +13,9 @@ SET TEST_FILE=spec\runner.c
 
 SET SOURCE_FILES= ^
     src\compiler\errors.c ^
-    src\core\dynstring.c ^
-    src\core\dynarray.c
+    src\core\dynstring.c 
+
+    @REM src\core\dynarray.c
 
     @REM src\seawitch.c ^
     @REM src\compiler\compiler.c ^
@@ -23,9 +24,8 @@ SET SOURCE_FILES= ^
     @REM src\compiler\parser.c 
 
 SET COMPILER_FLAGS= -Wall -Wextra ^
-    -Wno-unused-variable -Wno-unused-parameter ^
-    -Wno-unused-function -Wno-sign-conversion ^
-    -Wno-newline-eof -Wno-deprecated-declarations
+    -Wno-unused-variable -Wno-unused-parameter -Wno-unused-function -Wno-sign-conversion ^
+    -Wno-newline-eof -Wno-deprecated-declarations -Wno-comment
 
     REM -pedantic -Wall -Wextra ^
     REM -Wconversion -Wdouble-promotion -Wnull-dereference -Wwrite-strings  ^

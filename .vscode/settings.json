@@ -7,7 +7,8 @@
         "stdlib.h": "c",
         "compare": "cpp",
         "type_traits": "cpp",
-        "seawitch.h": "c"
+        "seawitch.h": "c",
+        "testing.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

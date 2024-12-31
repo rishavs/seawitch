@@ -10,6 +10,8 @@
 #define INITIAL_CAPACITY 8
 #endif
 
+// TODO - if all we use is the filesize, can we just not use a macro to create the proper
+// types and struct?
 // TODO - all helper functions should also take in the index of the item
 
 // Create a new dynamic array.

@@ -7,6 +7,7 @@
 #define SEAWITCH_VERSION "0.0.1"
 
 #define INITIAL_CAPACITY 8
+#define FIXED_STRING_SIZE 1024
 
 typedef enum {
     // Internal types
@@ -25,7 +26,8 @@ typedef enum {
     REF_FLOAT64,
 
     // Complex types. Composed of other individual types. Only pass by reference.
-    // STRING,
+    FXSTRING,
+    DYNSTRING,
     // LIST,
     // DICT,
     // FUNC,
@@ -52,29 +54,40 @@ typedef bool        Bool;
 typedef void*       Gen_ref;
 
 typedef struct {
-    char*       data;
-    Int64     len;
-    Int64     capacity;
-} String;
-
+    char*   data;
+    Int64   len;
+    Int64   capacity;
+} DynString;
 typedef struct {
-    String      type;
-    String      description;
-    String      hint;
+    Int64   len;
+    char    data[FIXED_STRING_SIZE];
+} FxString;
 
-    Int64       pos;
-    Int64       line;
-    Int64       column;
-    String      file;
-} Error;
+// // Error uses fixed strings to avoid dynamic memory allocation
+// typedef struct {
+//     Result_codes category;              // Error category. May replace with enum later
+//     FxString    message;                // Error message
 
-#define DEFINE_RESULT(type) \
-    typedef struct { \
-        Bool    ok; \
-        union { \
-            type    data; \
-            Error   error; \
-        }; \
-    } Result_of_##type##_t; \
+//     FxString    name;                   // Error header. Optional
+//     FxString    details;                // Optional
+//     FxString    hint;                   // Optional
+
+//     Int64       pos;                    // Error position provided by user. Optional
+//     Int64       line;                   // Error line number provided by user. Optional
+//     Int64       column;                 // Error column number provided by user. Optional
+//     FxString    filepath;               // Error file path provided by user. Optional
+    
+//     Int64       raised_at_line;         // Internal compilar path for error.
+//     FxString    raised_at_filepath;     // Internal compilar path for error.
+// } Error;
+
+// #define DEFINE_RESULT(type, name) \
+//     typedef struct { \
+//         Bool    ok; \
+//         union { \
+//             type    data; \
+//             Error   error; \
+//         }; \
+//     } Result_with_##name##; \
     
 #endif

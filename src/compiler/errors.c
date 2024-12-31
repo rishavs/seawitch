@@ -1,38 +1,136 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "errors.h"
 #include "seawitch.h"
 
-// Primitive library function failed. Non-fatal error. Show error message and return false
-void* print_error_return_null(char* transpiler_file, size_t transpiler_line) {
-    fprintf(stderr, "\033[0;31m%s\n", "[ ERROR ] Primitive function failed");
-    perror("Internal Note");
-    fprintf(stderr, "Internal Note: Failure occurred in the compiler code at line %zu, in the file \"%s\"", transpiler_line, transpiler_file);
-    fprintf(stderr, "\n\033[0m");
+// FATAL! Print error message and exit
+void fatal(Outcome code, Int64 line, char* filepath) {
+    fprintf(stderr, "\033[0;31m");
+    perror(Outcome_message[code]);
+    
+    if (line)       fprintf(stderr, "At Line: %zu\n", line);
+    if (filepath)   fprintf(stderr, "In File: %s\n", filepath);
 
-    return NULL;
-}
-
-// Primitive library function failed. Non-fatal error. Show error message and return false
-Bool print_error_return_false(char* transpiler_file, size_t transpiler_line) {
-    fprintf(stderr, "\033[0;31m%s\n", "[ ERROR ] Primitive function failed");
-    perror("Internal Note");
-    fprintf(stderr, "Internal Note: Failure occurred in the compiler code at line %zu, in the file \"%s\"", transpiler_line, transpiler_file);
-    fprintf(stderr, "\n\033[0m");
-
-    return false;
-}
-// Memory allocaltion failed. Fatal failure.
-void memory_allocation_failure(Int64 pos, Int64 line, char* filepath, char* transpiler_file, Int64 transpiler_line) {
-    fprintf(stderr, "\033[0;31m%s\n", "[ FATAL ] Memory Failure! Failed to allocate memory during compilation.");
-    if (pos && line && filepath) { // memory failures need not be tied to user code
-        fprintf(stderr, "Problem found at %zu:%zu in the file \"%s\"\n", pos, line, filepath);
-    };   
-    perror("Internal Note");
-    fprintf(stderr, "Internal Note: Failed occurred in the compiler code at line %zu, in the file \"%s\"", transpiler_line, transpiler_file);
     fprintf(stderr, "\n\033[0m");
     exit(EXIT_FAILURE);
 }
+
+// Non-fatal error. Show error message
+void yell_at_clouds(Outcome code, Int64 line, char* filepath) {
+    fprintf(stderr, "\033[0;31m");
+    perror(Outcome_message[code]);
+    
+    if (line)       fprintf(stderr, "At Line: %zu\n", line);
+    if (filepath)   fprintf(stderr, "In File: %s\n", filepath);
+
+    fprintf(stderr, "\n\033[0m");
+}
+
+// // Print error message and continue
+// void yell(Error err, FxString filepath, Int64 line) {
+//     fprintf(stderr, "\033[0;31m");
+//     perror("[ ERROR ]");
+//     fprintf(stderr, "Error Name: %s\n", err.name);
+//     fprintf(stderr, "Error Message: %s\n", err.message);
+    
+//     if (err.details) fprintf(stderr, "Error Details: %s\n", err.details);
+//     if (err.hint) fprintf(stderr, "Error Hint: %s\n", err.hint);
+
+//     if (err.hint) fprintf(stderr, "Error Position: %zu:%zu\n", err.line, err.pos);
+//     if (err.hint) fprintf(stderr, "Error File: %s\n", filepath);
+
+//     fprintf(stderr, "\n\033[0m");
+// }
+
+// // Create a new error
+// Error* error_create(Error_category category, FxString name, FxString message) {
+//     Error* err = calloc(1, sizeof(Error));
+//     if (!err) fatal_memory_allocation(__FILE__, __LINE__);
+
+//     err->category = category;
+//     if (name) strcpy(err->name, name);
+//     if (message) strcpy(err->message, message);
+//     if (details) strcpy(err->details, details);
+//     if (hint) strcpy(err->hint, hint);
+//     err->pos = pos;
+//     err->line = line;
+//     if (filepath) strcpy(err->filepath, filepath);
+
+//     return err;
+// }
+
+// // Some pre built error messages
+// // throw memory allocation failure and exit
+// void fatal_memory_allocation (FxString filepath, Int64 line) {
+//     fatal((Error) {
+//         .category = MEMORY_ALLOCATION_FAILURE,
+//         .name = "Memory Allocation Failure",
+//         .message = "Failed to allocate memory during compilation",
+//         .pos = 0,
+//         .line = 0,
+//         .column = 0,
+//         .filepath = ""
+//     }, filepath, line);
+// }
+
+// // throw null input error and exit
+// void fatal_null_input (FxString filepath, Int64 line) {
+//     fatal((Error) {
+//         .category = NULL_INPUT,
+//         .name = "Null Input Error",
+//         .message = "Null input detected during compilation",
+//         .pos = 0,
+//         .line = 0,
+//         .column = 0,
+//         .filepath = ""
+//     }, filepath, line);
+// }
+
+// // throw integer overflow error and exit
+// void fatal_integer_overflow (FxString filepath, Int64 line) {
+//     fatal((Error) {
+//         .category = INTEGER_OVERFLOW,
+//         .name = "Integer Overflow Error",
+//         .message = "Integer overflow detected during compilation",
+//         .pos = 0,
+//         .line = 0,
+//         .column = 0,
+//         .filepath = ""
+//     }, filepath, line);
+// }
+
+
+// // Primitive library function failed. Non-fatal error. Show error message and return false
+// void* print_error_return_null(char* transpiler_file, size_t transpiler_line) {
+//     fprintf(stderr, "\033[0;31m%s\n", "[ ERROR ] Primitive function failed");
+//     perror("Internal Note");
+//     fprintf(stderr, "Internal Note: Failure occurred in the compiler code at line %zu, in the file \"%s\"", transpiler_line, transpiler_file);
+//     fprintf(stderr, "\n\033[0m");
+
+//     return NULL;
+// }
+
+// // Primitive library function failed. Non-fatal error. Show error message and return false
+// Bool print_error_return_false(char* transpiler_file, size_t transpiler_line) {
+//     fprintf(stderr, "\033[0;31m%s\n", "[ ERROR ] Primitive function failed");
+//     perror("Internal Note");
+//     fprintf(stderr, "Internal Note: Failure occurred in the compiler code at line %zu, in the file \"%s\"", transpiler_line, transpiler_file);
+//     fprintf(stderr, "\n\033[0m");
+
+//     return false;
+// }
+// // Memory allocaltion failed. Fatal failure.
+// void memory_allocation_failure(Int64 pos, Int64 line, char* filepath, char* transpiler_file, Int64 transpiler_line) {
+//     fprintf(stderr, "\033[0;31m%s\n", "[ FATAL ] Memory Failure! Failed to allocate memory during compilation.");
+//     if (pos && line && filepath) { // memory failures need not be tied to user code
+//         fprintf(stderr, "Problem found at %zu:%zu in the file \"%s\"\n", pos, line, filepath);
+//     };   
+//     perror("Internal Note");
+//     fprintf(stderr, "Internal Note: Failed occurred in the compiler code at line %zu, in the file \"%s\"", transpiler_line, transpiler_file);
+//     fprintf(stderr, "\n\033[0m");
+//     exit(EXIT_FAILURE);
+// }
 
 
 // Here we will define all the compiler errors

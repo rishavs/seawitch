@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h> // For INT_MAX
 
 #include "seawitch.h"
 
@@ -24,7 +25,7 @@ Byte int64_do_to_byte(Int64 value) {
 String* int64_do_to_string(Int64 value) {
     char buffer[32];
     snprintf(buffer, sizeof(buffer), "%lld", value);
-    return string_create(buffer);
+    return dynstring_create(buffer);
 }
 
 // Convert a string to an Int64 value. Returns -1 on failure.
@@ -45,3 +46,8 @@ Int64 int64_do_copy(Int64 value) {
     return value;
 }
 
+// Internal Only. Convert a size_t to an Int64 value.
+Int64 int64_do_from_string(size_t val) {
+    if (val > INT_MAX) return -1;
+    return (Int64)val;
+}

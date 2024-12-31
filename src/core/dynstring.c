@@ -1,126 +1,153 @@
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdarg.h>
 #include <string.h>
 
 #include "errors.h"
 #include "seawitch.h"
 
 // Create a new dynamic string
-String* string_create(const char* data) {
-    if (data == NULL) return NULL;
-    Int64 len = strlen(data);
-
-    String* str = calloc(1, sizeof(String));
-    if (str == NULL) memory_allocation_failure(0, 0, NULL, __FILE__, __LINE__);
+Outcome dynstring_do_create(DynString* str, char* data) {
+    if (str == NULL || data == NULL) return OUT_NULL_INPUT;
+    
+    size_t str_size = strlen(data);
+    if (str_size > INT_MAX) return OUT_INTEGER_OVERFLOW;
+    Int64 len = (Int64)str_size;
 
     str->len = len;
     str->capacity = str->len + 1;
     str->data = calloc(str->capacity, sizeof(char));
-    if (str->data == NULL) memory_allocation_failure(0, 0, NULL, __FILE__, __LINE__);
+    if (str->data == NULL) return OUT_MEMORY_ERROR;
 
     memcpy(str->data, data, len);
-    if (str->data == NULL) memory_allocation_failure(0, 0, NULL, __FILE__, __LINE__);
 
     str->data[len] = '\0'; 
 
-    return str;
+    return OUT_OK;
 }
 
-// Get a substring from a string, given a position and length
-String* string_get_substring(String* src, Int64 pos, Int64 len) {
-    if (src == NULL) return NULL;
-    if (pos < 0 || pos >= src->len) return NULL;
-    if (len < 0) return NULL;
+// append a fixed-string or char* to a string
+Outcome dynstring_do_push_cstr(DynString* src, char* data) {
+     if (src == NULL || data == NULL) return OUT_NULL_INPUT;
 
-    if (pos + len > src->len) len = src->len - pos;
-
-    String* result = calloc(1, sizeof(String));
-    if (result == NULL) memory_allocation_failure(0, 0, NULL, __FILE__, __LINE__);
-
-    result->len = len;
-    result->capacity = result->len + 1;
-    result->data = calloc(result->capacity, sizeof(char));
-    if (result->data == NULL) memory_allocation_failure(0, 0, NULL, __FILE__, __LINE__);
-
-    memcpy(result->data, src->data + pos, len);
-    if (result->data == NULL) memory_allocation_failure(0, 0, NULL, __FILE__, __LINE__);
-
-    result->data[len] = '\0';
-    
-    return result;
-}
-
-// append a c-string/char* to a string
-String* string_push_cstr(String* src, const char* data) {
-    if (!src || !data) return NULL;
-    Int64 len = (Int64)(strlen(data));
-
-    // Integer overflow check (important!)
-    if (src->len + len + 1 < src->len || src->len + len + 1 < len) {
-        return NULL; // Integer overflow
-    }
+    size_t str_size = strlen(data);
+    if (str_size > INT64_MAX) return OUT_INTEGER_OVERFLOW;
+    Int64 len = (Int64)str_size;
 
     char* temp = realloc(src->data, src->len + len + 1);
-    if (!temp) memory_allocation_failure(0, 0, NULL, __FILE__, __LINE__);
+    if (temp == NULL) return OUT_MEMORY_ERROR;
     src->data = temp;
 
     memcpy(src->data + src->len, data, len);
     src->len += len;
     src->data[src->len] = '\0'; // Explicit null termination
 
-    return src;
+    return OUT_OK;
 }
 
-String* string_join(Int64 n, ...) {
-    if (n <= 0) return NULL;
+// Get a substring from a string, given a start and end position
+Outcome dynstring_do_slice (DynString* src, DynString* result, Int64 start, Int64 end) {
+    if (src == NULL || result == NULL ) return OUT_NULL_INPUT;
+
+    if (    
+        start < 0 || start >= src->len || 
+        end < start || end >= src->len
+    ) return OUT_INVALID_INPUT;
+
+    result->len = end - start + 1;
+    result->capacity = result->len + 1;
+    result->data = calloc(result->capacity, sizeof(char));
+    if (result->data == NULL) return OUT_MEMORY_ERROR;
+
+    memcpy(result->data, src->data + start, result->len);
+
+    result->data[result->len] = '\0';
+    
+    return OUT_OK;
+}
+
+Outcome dynstring_do_join(DynString* result, Int64 n, ...) {
+    if (result == NULL) return OUT_NULL_INPUT;
+    if (n <= 0) return OUT_INVALID_INPUT;
 
     va_list args;
     va_start(args, n);
 
+    // Calculate total length
     Int64 total_len = 0;
     for (Int64 i = 0; i < n; i++) {
-        String* str = va_arg(args, String*);
-        if (!str) {
+        DynString* str = va_arg(args, DynString*);
+        if (str == NULL) {
             va_end(args);
-            return NULL;
+            return OUT_NULL_INPUT;   // One of the input strings is not formed
         }
         total_len += str->len;
     }
     va_end(args);
 
-    String* result = calloc(1, sizeof(String));
-    if (!result) memory_allocation_failure(0, 0, NULL, __FILE__, __LINE__);
+    // allocate the result string
     result->len = total_len;
     result->capacity = total_len + 1;
-
     result->data = calloc(result->capacity, sizeof(char));
-    if (!result->data) memory_allocation_failure(0, 0, NULL, __FILE__, __LINE__);
+    if (result->data == NULL) return OUT_MEMORY_ERROR;
 
+    // Copy the data from each input string into the result string
     va_start(args, n);
     Int64 offset = 0;
     for (Int64 i = 0; i < n; i++) {
-        String* str = va_arg(args, String*);
+        DynString* str = va_arg(args, DynString*);
         memcpy(result->data + offset, str->data, str->len);
         offset += str->len;
     }
     va_end(args);
+
     result->data[result->len] = '\0'; // Explicit null termination
 
-    return result;
+    return OUT_OK;
 }
 
 // Compare two strings
-Bool string_compare(String* str1, String* str2) {
-    if (str1 == NULL || str2 == NULL) return false;
-    if (str1->len != str2->len) return false;
+Outcome dynstring_do_compare(DynString* str1, DynString* str2) {
+    if (str1 == NULL || str2 == NULL) return OUT_NULL_INPUT;
+    if (str1->len != str2->len) return OUT_OK_AND_FALSE;
 
-    return strncmp(str1->data, str2->data, str1->len) == 0;
+    Bool res = strncmp(str1->data, str2->data, str1->len) == 0;
+
+    return res ? OUT_OK : OUT_OK_AND_FALSE;
 }
 
 // Check if a string starts with a fragment
-Bool string_starts_with(String* src, Int64 pos, String* frag) {
-    if (src == NULL || frag == NULL) return false;
-    if (pos < 0 || pos >= src->len) return false;
-    if (pos + frag->len > src->len) return false;
+Outcome dynstring_do_substring_at(DynString* src, Int64 pos, DynString* frag) {
+    if (src == NULL || frag == NULL) return OUT_NULL_INPUT;
+    if (pos < 0 || pos >= src->len || pos + frag->len > src->len) return OUT_INVALID_INPUT;
 
-    return strncmp(src->data + pos, frag->data, frag->len) == 0;
+    Bool res = strncmp(src->data + pos, frag->data, frag->len) == 0;
+
+    return res ? OUT_OK : OUT_OK_AND_FALSE;
+}
+
+// Find a fragment in a string
+Outcome dynstring_do_find(DynString* src, Int64* result_at, DynString* frag) {
+    if (src == NULL || frag == NULL) return OUT_NULL_INPUT;
+    if (frag->len > src->len) return OUT_INVALID_INPUT;
+
+    for (Int64 i = 0; i < src->len; i++) {
+        if (dynstring_do_substring_at(src, i, frag)) {
+            *result_at = i;
+            return OUT_OK;
+        }
+    }
+
+    return OUT_OK_AND_FALSE;
+}
+
+// Print string
+Outcome dynstring_do_print(DynString* str, bool print_newline) {
+    if (str == NULL) return OUT_NULL_INPUT;
+
+    printf("%s", str->data);
+    if (print_newline) printf("\n");
+
+    return OUT_OK;
 }

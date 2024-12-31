@@ -22,7 +22,7 @@ typedef struct
 // Null input
 Test_Result can_create_int_array_and_print() {
     Test_Result res = { 
-        .desc = string_create("can create an int array and print it"),
+        .desc = dynstring_create("Array: Can create an int array and print it"),
         .passed = false 
     };
 
@@ -60,7 +60,7 @@ Test_Result can_create_int_array_and_print() {
 
 Test_Result can_push_and_pop_int_array() {
     Test_Result res = { 
-        .desc = string_create("can push and pop an int array"),
+        .desc = dynstring_create("Array: Can push and pop an int array"),
         .passed = false 
     };
 
@@ -95,7 +95,7 @@ Test_Result can_push_and_pop_int_array() {
 
 Test_Result can_get_set_int_array() {
     Test_Result res = { 
-        .desc = string_create("can get and set an int array"),
+        .desc = dynstring_create("Array: Can get and set an int array"),
         .passed = false 
     };
 
@@ -127,7 +127,7 @@ Test_Result can_get_set_int_array() {
 
 Test_Result can_slice_int_array() {
     Test_Result res = { 
-        .desc = string_create("can slice an int array"),
+        .desc = dynstring_create("Array: Can slice an int array"),
         .passed = false 
     };
 
@@ -155,7 +155,7 @@ Test_Result can_slice_int_array() {
 
 Test_Result can_join_multiple_int_arrays() {
     Test_Result res = { 
-        .desc = string_create("can join multiple int arrays"),
+        .desc = dynstring_create("Array: Can join multiple int arrays"),
         .passed = false 
     };
 
@@ -189,7 +189,7 @@ Test_Result can_join_multiple_int_arrays() {
 
 Test_Result can_filter_int_array() {
     Test_Result res = { 
-        .desc = string_create("can filter an int array"),
+        .desc = dynstring_create("Array: Can filter an int array"),
         .passed = false 
     };
 
@@ -220,7 +220,7 @@ Test_Result can_filter_int_array() {
 
 Test_Result can_sort_int_array() {
     Test_Result res = { 
-        .desc = string_create("can sort an int array"),
+        .desc = dynstring_create("Array: Can sort an int array"),
         .passed = false 
     };
 
@@ -254,7 +254,7 @@ Test_Result can_sort_int_array() {
 
 Test_Result can_compare_int_arrays() {
     Test_Result res = { 
-        .desc = string_create("can compare int arrays"),
+        .desc = dynstring_create("Array: Can compare int arrays"),
         .passed = false 
     };
 
@@ -304,7 +304,7 @@ Test_Result can_compare_int_arrays() {
 
 Test_Result can_check_for_subarray() {
     Test_Result res = { 
-        .desc = string_create("can check for subarray"),
+        .desc = dynstring_create("Array: Can check for subarray"),
         .passed = false 
     };
 
@@ -338,7 +338,7 @@ Test_Result can_check_for_subarray() {
 
 Test_Result can_find_item_in_array() {
     Test_Result res = { 
-        .desc = string_create("can find an item in an array"),
+        .desc = dynstring_create("Array: Can find an item in an array"),
         .passed = false 
     };
 
@@ -368,7 +368,7 @@ Test_Result can_find_item_in_array() {
 
 Test_Result can_map_through_array() {
     Test_Result res = { 
-        .desc = string_create("can map through an array"),
+        .desc = dynstring_create("Array: Can map through an array"),
         .passed = false 
     };
 
@@ -413,7 +413,7 @@ Test_Result can_map_through_array() {
 
 Test_Result can_reduce_array() {
     Test_Result res = { 
-        .desc = string_create("can reduce an array"),
+        .desc = dynstring_create("Array: Can reduce an array"),
         .passed = false 
     };
 
@@ -442,7 +442,7 @@ Test_Result can_reduce_array() {
 
 Test_Result can_create_array_of_structs_as_values() {
     Test_Result res = { 
-        .desc = string_create("can create an array of structs as values"),
+        .desc = dynstring_create("Array: Can create an array of structs as values"),
         .passed = false 
     };
 
@@ -478,9 +478,9 @@ Test_Result can_create_array_of_structs_as_values() {
 }
 
 
-Test_Result can_create_array_of_structs_as_refs() {
+Test_Result can_create_array_of_refs_to_structs() {
     Test_Result res = {
-        .desc = string_create("can create an array of structs as refs"),
+        .desc = dynstring_create("Array: Can create an array of refs to structs"),
         .passed = false
     };
 

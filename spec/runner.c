@@ -1,29 +1,33 @@
+#include <stdio.h>
+
 #include "testing.h"
 #include "seawitch.h"
 
 // Import the tests
-#include "dynarray.test.c"
+// #include "dynarray.test.c"
+#include "dynstring.test.c"
 
 // Create an array of the tests
 Test_Fun all_tests[] = {
+    create_basic_dynstring,
     // basic_string_create,
     // push_str_chars_to_string,
     // get_substring,
 
-    can_create_int_array_and_print,
-    can_push_and_pop_int_array,
-    can_get_set_int_array,
-    can_slice_int_array,
-    can_join_multiple_int_arrays,
-    can_filter_int_array,
-    can_sort_int_array,
-    can_compare_int_arrays,
-    can_check_for_subarray,
-    can_find_item_in_array,
-    can_map_through_array,
-    can_reduce_array,
-    can_create_array_of_structs_as_values,
-    can_create_array_of_structs_as_refs,
+    // can_create_int_array_and_print,
+    // can_push_and_pop_int_array,
+    // can_get_set_int_array,
+    // can_slice_int_array,
+    // can_join_multiple_int_arrays,
+    // can_filter_int_array,
+    // can_sort_int_array,
+    // can_compare_int_arrays,
+    // can_check_for_subarray,
+    // can_find_item_in_array,
+    // can_map_through_array,
+    // can_reduce_array,
+    // can_create_array_of_structs_as_values,
+    // can_create_array_of_refs_to_structs,
 
     // End of tests
     NULL
