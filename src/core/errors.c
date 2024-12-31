@@ -10,6 +10,7 @@
 // Build a short error object with minimal ceremony
 Error snitch(char* msg, Int64 line, char* filepath) {
     return (Error){ 
+        .ok = false,
         .message = fxstring_do_from_chars(msg, false),
         .line = line,
         .filepath = fxstring_do_from_chars(filepath, false)

@@ -12,7 +12,8 @@ SET MAIN_FILE=src\seawitch.c
 SET TEST_FILE=spec\runner.c
 
 SET SOURCE_FILES=src\core\errors.c ^
-    src\core\fxstring.c
+    src\core\fxstring.c ^
+    src\core\dynstring.c
     
     @REM src\core\dynstring.c 
     @REM src\core\dynarray.c

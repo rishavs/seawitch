@@ -66,6 +66,8 @@ FxString fxstring_do_from_chars(char* frag, Bool truncate_at_beginning);
 
 // Error uses fixed strings to avoid dynamic memory allocation
 typedef struct {
+    Bool        ok;                     // Error status
+    
     FxString    message;                // Error message
 
     FxString    name;                   // Error header. Optional

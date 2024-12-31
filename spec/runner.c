@@ -12,8 +12,7 @@
 Test_Result must_pass () {
     return (Test_Result) { 
         .desc = fxstring_do_from_chars("DUMMY: This test must Pass", false),
-        .passed = true,
-        .out = OUT_OK
+        .passed = true
     };
 }
 
@@ -21,7 +20,11 @@ Test_Result must_fail () {
     return (Test_Result) { 
         .desc = fxstring_do_from_chars("DUMMY: This test must Fail", false) ,
         .passed = false, 
-        .out = OUT_NULL_INPUT
+        .error = {
+            .message = fxstring_do_from_chars("This is an error message", false),
+            .line = __LINE__,
+            .filepath = fxstring_do_from_chars(__FILE__, true)
+        }
     };
 }
 
@@ -71,8 +74,8 @@ int main() {
             printf("\033[0;31m%lli:\t[ FAILED ]\t%s\n\033[0m", i, test.desc.data);
 
             // If there is also an error message, print it
-            if (test.out != OUT_OK) {
-                printf("\033[0;31m\t\t\t-- Error: %s\n\033[0m", Outcome_message[test.out]);
+            if (test.error.message.len > 0) {
+                printf("\033[0;31m\t\t\t-- Error: %s\n\033[0m", test.error.message.data);
                 // yell(test.result.error);
             }
         }
