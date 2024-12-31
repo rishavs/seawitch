@@ -17,7 +17,7 @@ Test_Result must_pass () {
 
 Test_Result must_fail () {
     return (Test_Result) { 
-        .result = { .ok = false }, 
+        .result = { .ok = false, .error = { .message = fxstring_do_from_chars("Dummy Error msg") } }, 
         .desc = fxstring_do_from_chars("DUMMY: This test must Fail") 
     };
 }
@@ -69,7 +69,7 @@ int main() {
 
             // If there is also an error message, print it
             if (test.result.error.message.len > 0) {
-                printf("\033[0;31m\t\t%s\n\033[0m", test.result.error.message.data);
+                printf("\033[0;31m\t\t\tError: %s\n\033[0m", test.result.error.message.data);
             }
         }
         i++;
