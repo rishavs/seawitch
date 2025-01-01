@@ -16,7 +16,7 @@ Error dynstring_do_create(DynString* str, char* data) {
     if (str_size > INT_MAX) return snitch("Integer overflow", __LINE__, __FILE__);
     Int64 len = (Int64)str_size;
 
-    DynString* temp = realloc(str, sizeof(DynString));
+    DynString* temp = calloc(1, sizeof(DynString));
     if (temp == NULL) return snitch("Memory error", __LINE__, __FILE__);
 
     str = temp;
