@@ -23,8 +23,8 @@ Error must_fail_fun(FxString *desc) {
 
 // create a list of test functions like must_pass_fun, must_fail_fun, etc.
 Spec all_specs[] = {
-    must_pass_fun,
-    must_fail_fun,
+    // must_pass_fun,
+    // must_fail_fun,
     create_basic_dynstring,
     push_chars_to_string,
     slice_string,
@@ -36,6 +36,7 @@ Spec all_specs[] = {
     compare_strings,
     compare_empty_strings,
     check_user_inputs_for_comparing_strings,
+    get_substring_at_given_pos,
 
     // End of tests
     NULL

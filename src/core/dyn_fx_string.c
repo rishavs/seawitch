@@ -82,7 +82,7 @@ DynString* dynstring_create() {
 
 // append a fixed-string or char* to a string
 Error dynstring_push_chars(DynString* src, char* data) {
-     if (src == NULL || data == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if (src == NULL || data == NULL || src->data == NULL) return snitch("Null input", __LINE__, __FILE__);
 
     size_t str_size = strlen(data);
     if (str_size > INT64_MAX) return snitch("Integer overflow", __LINE__, __FILE__);
@@ -102,11 +102,12 @@ Error dynstring_push_chars(DynString* src, char* data) {
 // Get a substring from a string, given a start and end position
 Error dynstring_slice (DynString* src, DynString* result, Int64 start, Int64 end) {
     if (src == NULL || result == NULL ) return snitch("Null input", __LINE__, __FILE__);
+    if (src->data == NULL || result->data == NULL) return snitch("Null input", __LINE__, __FILE__);
 
     if (    
         start < 0 || start >= src->len || 
         end < start || end >= src->len
-    ) return snitch("Invalid input", __LINE__, __FILE__);
+    ) return snitch("Out of bounds input", __LINE__, __FILE__);
 
     result->len = end - start + 1;
     result->capacity = result->len + 1;
@@ -122,7 +123,7 @@ Error dynstring_slice (DynString* src, DynString* result, Int64 start, Int64 end
 
 Error dynstring_join(DynString* result, Int64 n, ...) {
     if (result == NULL) return snitch("Null input", __LINE__, __FILE__);
-    if (n <= 0) return snitch("Invalid input", __LINE__, __FILE__);
+    if (n <= 0) return snitch("Out of bounds input", __LINE__, __FILE__);
 
     va_list args;
     va_start(args, n);
@@ -131,7 +132,7 @@ Error dynstring_join(DynString* result, Int64 n, ...) {
     Int64 total_len = 0;
     for (Int64 i = 0; i < n; i++) {
         DynString* str = va_arg(args, DynString*);
-        if (str == NULL) {
+        if (str == NULL || str->data == NULL) {
             va_end(args);
             return snitch("Null input", __LINE__, __FILE__);   // That specific input string is not formed
         }
@@ -163,6 +164,8 @@ Error dynstring_join(DynString* result, Int64 n, ...) {
 // Compare two strings
 Error dynstring_compare(DynString* str1, DynString* str2, Bool* result) {
     if (str1 == NULL || str2 == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if (str1->data == NULL || str2->data == NULL) return snitch("Null input", __LINE__, __FILE__);
+
     if (str1->len != str2->len) {
         *result = false;
         return (Error){ .ok = true };
@@ -173,15 +176,19 @@ Error dynstring_compare(DynString* str1, DynString* str2, Bool* result) {
     return (Error){ .ok = true };
 }
 
-// // Check if a string starts with a fragment
-// Error dynstring_do_substring_at(DynString* src, Int64 pos, DynString* frag, Bool* result) {
-//     if (src == NULL || frag == NULL) return snitch("Null input", __LINE__, __FILE__);
-//     if (pos < 0 || pos >= src->len || pos + frag->len > src->len) return snitch("Invalid input", __LINE__, __FILE__);
+// Check if a string starts with a fragment
+Error dynstring_substring_at(DynString* src, DynString* frag, Int64 pos, Bool* result) {
+    if (src == NULL || frag == NULL || src->data == NULL || frag->data == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if (pos < 0 || pos >= src->len) return snitch("Out of bounds input", __LINE__, __FILE__);
 
-//     *result = strncmp(src->data + pos, frag->data, frag->len) == 0;
-
-//     return (Error){ .ok = true };
-// }
+    if (frag->len > src->len - pos) {
+        *result = false;
+    } else {
+        *result = strncmp(src->data + pos, frag->data, frag->len) == 0;
+    }
+    
+    return (Error){ .ok = true };
+}
 
 // // Find a fragment in a string
 // Error dynstring_do_find(DynString* src, DynString* frag, Int64* result_at) {

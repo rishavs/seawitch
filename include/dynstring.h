@@ -33,12 +33,12 @@ Error dynstring_join(DynString* result, Int64 n, ...);
 Error dynstring_compare(DynString* str1, DynString* str2, Bool* result);
 
 // Check if a string starts with a fragment
-Error dynstring_substring_at(DynString* src, Int64 pos, DynString* frag);
+Error dynstring_substring_at(DynString* src, DynString* frag, Int64 pos, Bool* result);
 
 // Find a fragment in a string
-Error dynstring_find(DynString* src, Int64* result_at, DynString* frag);
+// Error dynstring_find(DynString* src, Int64* result_at, DynString* frag);
 
 // Print string
-Error dynstring_print(DynString* str, bool print_newline);
+// Error dynstring_print(DynString* str, bool print_newline);
 
 #endif // SEAWITCH_STRING_H
