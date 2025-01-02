@@ -62,12 +62,13 @@ typedef struct {
     Int64   len;
     char    data[FIXED_STRING_SIZE];
 } FxString;
-FxString fxstring_do_from_chars(char* frag, Bool truncate_at_beginning);
+FxString fxstring_create(char* frag);
+FxString fxstring_create_from_behind(char* frag);
 
 // Error uses fixed strings to avoid dynamic memory allocation
 typedef struct {
     Bool        ok;                     // Error status
-    
+
     FxString    message;                // Error message
 
     FxString    name;                   // Error header. Optional

@@ -6,7 +6,7 @@
 
 // Import the tests
 // #include "dynarray.test.c"
-// #include "dynstring.test.c"
+#include "dynstring.test.c"
 
 // Dummy tests
 
@@ -21,21 +21,13 @@ Error must_fail_fun() {
 
 int main() {
 
-    Spec must_pass = {
-        .desc = fxstring_do_from_chars("DUMMY: This test must Pass", false),
-        .test = must_pass_fun
-    };
-
-    Spec must_fail = {
-        .desc = fxstring_do_from_chars("DUMMY: This test must Fail", false),
-        .test = must_fail_fun
-    };
-
-
     // Create an array of the tests
     Spec all_specs[] = {
-        must_pass,
-        must_fail,
+        { .desc = fxstring_create("DUMMY: This test must Pass"), .test = must_pass_fun },
+        { .desc = fxstring_create("DUMMY: This test must Fail"), .test = must_fail_fun },
+
+        { .desc = fxstring_create("Create a new dynamic string"), .test = create_basic_dynstring },
+        // { .desc = fxstring_do_from_chars("Push cstr and chars to string", false), .test = push_str_chars_to_string },
     
         // End of tests
         (Spec){}

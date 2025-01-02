@@ -11,9 +11,9 @@
 Error snitch(char* msg, Int64 line, char* filepath) {
     return (Error){ 
         .ok = false,
-        .message = fxstring_do_from_chars(msg, false),
+        .message = fxstring_create(msg),
         .line = line,
-        .filepath = fxstring_do_from_chars(filepath, false)
+        .filepath = fxstring_create_from_behind(filepath)
     };
 }
 

@@ -32,71 +32,57 @@
 
 
 // create a new string and check length
-Test_Result create_basic_dynstring() {
-    Test_Result res = { 
-        .desc = fxstring_do_from_chars("Dynstring: can create a basic string", false),
-        .passed = false 
-    };
-    
-    DynString* str = calloc(1, sizeof(DynString));
-    Error err = dynstring_do_create(str, "Hello, World!");
-    if (!err.ok) return err;
+Error create_basic_dynstring() {
+    DynString* str = dynstring_create();
 
     // Check for length
     size_t str_size = strlen(str->data);
-    if (str_size > INT_MAX) {
-        res.error = snitch("Integer overflow", __LINE__, __FILE__);
-        return res;
-    }
     Int64 len_via_strlen = (Int64)str_size;
 
     Int64 len_via_loop = 0;
     while (str->data[len_via_loop] != '\0') {
         len_via_loop++;
     }
-    if (str->len == len_via_loop && str->len == len_via_strlen && str->len == 13) {
-        res.passed = true;
-    } else {
-        res.passed = false;
+    if (str->len != len_via_loop || str->len != len_via_strlen || str->len != 0) {
+        return snitch ("Length of new string is wrong", __LINE__, __FILE__);
     }
 
-    return res;
+    return (Error){ .ok = true };
 }
 
-
-Test_Result push_str_chars_to_string() {
-    Test_Result res = { 
-        .desc = dynstring_create("Dynstring: can push cstr and chars to string"),
-        .passed = false 
-    };
+// Test_Result push_str_chars_to_string() {
+//     Test_Result res = { 
+//         .desc = dynstring_create("Dynstring: can push cstr and chars to string"),
+//         .passed = false 
+//     };
 
     
-    DynString* str = calloc(1, sizeof(DynString));
-    Error err = dynstring_do_create(str, "Hell");
-    if (!err.ok) return err;
+//     DynString* str = calloc(1, sizeof(DynString));
+//     Error err = dynstring_do_create(str, "Hell");
+//     if (!err.ok) return err;
 
-    // Push a c-string
-    err = dynstring_push_cstr(str, "o, ");
-    if (!err.ok) return err;
+//     // Push a c-string
+//     err = dynstring_push_cstr(str, "o, ");
+//     if (!err.ok) return err;
 
-    // Push a char
-    err = dynstring_push_cstr(str, (char[]){'W', '\0'});
-    if (!err.ok) return err;
+//     // Push a char
+//     err = dynstring_push_cstr(str, (char[]){'W', '\0'});
+//     if (!err.ok) return err;
 
-    // Push the rest of the string
-    err = dynstring_push_cstr(str, "orld!");
-    if (!err.ok) return err;
+//     // Push the rest of the string
+//     err = dynstring_push_cstr(str, "orld!");
+//     if (!err.ok) return err;
 
-    // Check for length
-    if (str->len == 13) {
-        res.passed = true;
-        printf("%s\n", str->data);
-    } else {
-        res.passed = false;
-    }
+//     // Check for length
+//     if (str->len == 13) {
+//         res.passed = true;
+//         printf("%s\n", str->data);
+//     } else {
+//         res.passed = false;
+//     }
 
-    return res;
-}
+//     return res;
+// }
 
 // Test_Result get_substring() {
 //     Test_Result res = { 

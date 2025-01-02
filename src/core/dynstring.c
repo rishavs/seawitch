@@ -8,6 +8,22 @@
 #include "seawitch.h"
 
 // Create a new dynamic string. 
+DynString* dynstring_create() {
+    
+    DynString* str = calloc(1, sizeof(DynString));
+    if (str == NULL) fatal(snitch("Memory error", __LINE__, __FILE__));
+
+    str->len = 0;
+    str->capacity = FIXED_STRING_SIZE;
+    str->data = calloc(str->capacity, sizeof(char));
+    if (str->data == NULL) fatal(snitch("Memory error", __LINE__, __FILE__));
+
+    str->data[0] = '\0'; 
+
+    return str;
+}
+
+// Create a new dynamic string. 
 // Note that the input string may not be initialized, so we need to initialize it
 Error dynstring_do_create(DynString* str, char* data) {
     if (data == NULL) return snitch("Null input", __LINE__, __FILE__);

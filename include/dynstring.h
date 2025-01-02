@@ -17,6 +17,9 @@
 #include "errors.h"
 #include "seawitch.h"
 
+// Create an empty dynamic string
+DynString* dynstring_create();
+
 // Create a new dynamic string
 Error dynstring_do_create(DynString* str, const char* data);
 
