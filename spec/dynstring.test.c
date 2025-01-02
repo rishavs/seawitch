@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#include "testing.h"
+// #include "testing.h"
 #include "dynstring.h"
 #include "seawitch.h"
 
@@ -32,7 +32,9 @@
 
 
 // create a new string and check length
-Error create_basic_dynstring() {
+Error create_basic_dynstring(FxString* desc) {
+    *desc = fxstring_create("Dynstring: Create a new dynamic string");
+
     DynString* str = dynstring_create();
     if (str == NULL || str->data == NULL) return snitch ("Failed to create new string", __LINE__, __FILE__);
 
@@ -54,7 +56,9 @@ Error create_basic_dynstring() {
     return (Error){ .ok = true };
 }
 
-Error push_chars_to_string() {
+Error push_chars_to_string(FxString *desc) {
+    *desc = fxstring_create("Dynstring: can push cstr and chars to string");
+
     DynString* str = dynstring_create();
     if (str == NULL || str->data == NULL) return snitch ("Failed to create new string", __LINE__, __FILE__);
 
@@ -71,47 +75,287 @@ Error push_chars_to_string() {
     if (!err.ok) return err;
 
     // Check for length
-    if (str->len == 13) {
-        printf("%s\n", str->data);
-        return (Error){ .ok = true };
-    } else {
+    if (str->len != 13) {
         return snitch ("Length of new string is wrong", __LINE__, __FILE__);
     }
+
+    return (Error){ .ok = true };
 }
 
-// Test_Result push_str_chars_to_string() {
-//     Test_Result res = { 
-//         .desc = dynstring_create("Dynstring: can push cstr and chars to string"),
-//         .passed = false 
-//     };
-
+Error slice_string (FxString *desc) {
+    *desc = fxstring_create("Dynstring: can slice a substring from a source string");
     
-//     DynString* str = calloc(1, sizeof(DynString));
-//     Error err = dynstring_do_create(str, "Hell");
-//     if (!err.ok) return err;
+    DynString* str = dynstring_create();
+    Error err = dynstring_push_chars(str, "Hello, World!");
+    if (!err.ok) return err;
 
-//     // Push a c-string
-//     err = dynstring_push_cstr(str, "o, ");
-//     if (!err.ok) return err;
+    // Get substring
+    DynString* sub = dynstring_create();
+    err = dynstring_slice(str, sub, 7, 11);
+    if (!err.ok) return err;
 
-//     // Push a char
-//     err = dynstring_push_cstr(str, (char[]){'W', '\0'});
-//     if (!err.ok) return err;
+    // Check for length
+    if (sub->len != 5) {
+        return snitch ("Length of substring is wrong", __LINE__, __FILE__);
+    }
 
-//     // Push the rest of the string
-//     err = dynstring_push_cstr(str, "orld!");
-//     if (!err.ok) return err;
+    // Check for content
+    if (strncmp(sub->data, "World", 5) != 0) {
+        return snitch ("Content of substring is wrong", __LINE__, __FILE__);
+    }
 
-//     // Check for length
-//     if (str->len == 13) {
-//         res.passed = true;
-//         printf("%s\n", str->data);
-//     } else {
-//         res.passed = false;
-//     }
+    return (Error){ .ok = true };
+}
 
-//     return res;
-// }
+Error check_user_inputs_for_slicing_string(FxString* desc ) {
+    *desc = fxstring_create("Dynstring: check invalid user inputs for slicing string");
+    
+    DynString* str = dynstring_create();
+    Error err = dynstring_push_chars(str, "Hello, World!");
+    if (!err.ok) return err;
+
+    // Get substring
+    DynString* sub = dynstring_create();
+
+    // Give invalid inputs
+    err = dynstring_slice(str, sub, -1, 10);
+    if (err.ok) return snitch ("Negative start index not caught", __LINE__, __FILE__);
+
+    err = dynstring_slice(str, sub, 7, 100);
+    if (err.ok) return snitch ("End index out of bounds not caught", __LINE__, __FILE__);
+
+    err = dynstring_slice(str, sub, 7, 6);
+    if (err.ok) return snitch ("Start index greater than end index not caught", __LINE__, __FILE__);
+
+    // Check for length
+    if (sub->len != 0 || str->len != 13) {
+        return snitch ("Length of substring after failed slicing is wrong", __LINE__, __FILE__);
+    }
+
+    return (Error){ .ok = true };
+}
+
+Error join_multiple_strings(FxString* desc) {
+    *desc = fxstring_create("Dynstring: can join multiple strings into a single string");
+    
+    DynString* str1 = dynstring_create();
+    Error err = dynstring_push_chars(str1, "Hello, ");
+    if (!err.ok) return err;
+
+    DynString* str2 = dynstring_create();
+    err = dynstring_push_chars(str2, "World!");
+    if (!err.ok) return err;
+
+    // Join strings
+    DynString* result = dynstring_create();
+    err = dynstring_join(result, 2, str1, str2);
+    if (!err.ok) return err;
+
+    // Check for length
+    if (result->len != 13) {
+        return snitch ("Length of joined string is wrong", __LINE__, __FILE__);
+    }
+
+    // Check for content
+    if (strncmp(result->data, "Hello, World!", 13) != 0) {
+        return snitch ("Content of joined string is wrong", __LINE__, __FILE__);
+    }
+
+    return (Error){ .ok = true };
+
+}
+
+Error join_string_with_empty_string(FxString* desc) {
+    *desc = fxstring_create("Dynstring: can join a string with an empty string");
+
+    DynString* content_string = dynstring_create();
+    Error err = dynstring_push_chars(content_string, "Hello");
+    if (!err.ok) return err;
+
+    DynString* empty_str1 = dynstring_create();
+    DynString* empty_str2 = dynstring_create();
+
+    // Join 2 empty strings
+    DynString* res1 = dynstring_create();
+    err = dynstring_join(res1, 2, empty_str1, empty_str2);
+    if (!err.ok) return err;
+
+    // Check for length
+    if (res1->len != 0 || empty_str1->len != 0 || empty_str2->len != 0) {
+        return snitch ("Length of joined string is wrong", __LINE__, __FILE__);
+    }
+
+    // Check for content
+    if (strncmp(res1->data, "", 0) != 0) {
+        return snitch ("Content of joined string is wrong", __LINE__, __FILE__);
+    }
+
+    // now join 2 strings where 1st string is empty
+    DynString* res2 = dynstring_create();
+    err = dynstring_join(res2, 2, empty_str1, content_string);
+    if (!err.ok) return err;
+
+    // Check for length
+    if (res2->len != 5) {
+        return snitch ("Length of joined string is wrong", __LINE__, __FILE__);
+    }
+    // Check for content
+    if (strncmp(res2->data, "Hello", 5) != 0) {
+        return snitch ("Content of joined string is wrong", __LINE__, __FILE__);
+    }
+
+    // now join 2 strings where 2nd string is empty
+    DynString* res3 = dynstring_create();
+    err = dynstring_join(res3, 2, content_string, empty_str1);
+    if (!err.ok) return err;
+
+    // Check for length
+    if (res3->len != 5) {
+        return snitch ("Length of joined string is wrong", __LINE__, __FILE__);
+    }
+
+    // Check for content
+    if (strncmp(res3->data, "Hello", 7) != 0) {
+        return snitch ("Content of joined string is wrong", __LINE__, __FILE__);
+    }
+
+    return (Error){ .ok = true };
+}
+
+Error join_single_string(FxString* desc) {
+    *desc = fxstring_create("Dynstring: can join a single string into a clone string");
+    
+    // check if we can join only 1 string
+    DynString* str = dynstring_create();
+    Error err = dynstring_push_chars(str, "Hello");
+    if (!err.ok) return err;
+
+    DynString* res = dynstring_create();
+    err = dynstring_join(res, 1, str);
+    if (!err.ok) return err;
+
+    // Check for length
+    if (res->len != 5) {
+        return snitch ("Length of joined string is wrong", __LINE__, __FILE__);
+    }
+    // Check for content
+    if (strncmp(res->data, "Hello, ", 5) != 0) {
+        return snitch ("Content of joined string is wrong", __LINE__, __FILE__);
+    }
+
+    return (Error){ .ok = true };
+}
+
+Error check_user_inputs_for_joining_strings(FxString* desc) {
+    *desc = fxstring_create("Dynstring: check invalid user inputs for joining strings");
+    Error err;
+
+    DynString* null_str;
+    DynString* str1 = dynstring_create();
+    err = dynstring_push_chars(str1, "Hello, ");
+    if (!err.ok) return err;
+
+    DynString* str2 = dynstring_create();
+    err = dynstring_push_chars(str2, "World!");
+    if (!err.ok) return err;
+
+    DynString* res = dynstring_create();
+
+    // check if null result string is caught
+    err = dynstring_join(null_str, 2, str1, str2);
+    if (err.ok) return snitch ("Null input not caught", __LINE__, __FILE__);
+
+    // check if null string is caught
+    err = dynstring_join(res, 2, str1, null_str);
+    if (err.ok) return snitch ("Null input not caught", __LINE__, __FILE__);
+
+    // check if zero strings are caught
+    err = dynstring_join(res, 0);
+    if (err.ok) return snitch ("Joining zero strings not caught", __LINE__, __FILE__);
+
+    // check if negative number of strings is caught
+    err = dynstring_join(res, -1, str1, str2);
+    if (err.ok) return snitch ("Negative number of strings not caught", __LINE__, __FILE__);
+
+    return (Error){ .ok = true };
+}
+
+Error compare_strings(FxString* desc) {
+    *desc = fxstring_create("Dynstring: can compare two strings");
+    
+    DynString* str1 = dynstring_create();
+    Error err = dynstring_push_chars(str1, "foo");
+    if (!err.ok) return err;
+
+    DynString* str2 = dynstring_create();
+    err = dynstring_push_chars(str2, "bar");
+    if (!err.ok) return err;
+
+    // Compare strings
+    Bool result;
+    err = dynstring_compare(str1, str2, &result);
+    if (!err.ok) return err;
+
+    // Check for length
+    if (result != false) {
+        return snitch ("Strings should not be equal", __LINE__, __FILE__);
+    }
+
+    // Compare same strings
+    err = dynstring_compare(str1, str1, &result);
+    if (!err.ok) return err;
+
+    // Check for length
+    if (result != true) {
+        return snitch ("Strings should be equal", __LINE__, __FILE__);
+    }
+
+    return (Error){ .ok = true };
+}
+
+Error compare_empty_strings(FxString* desc) {
+    *desc = fxstring_create("Dynstring: can compare two empty strings");
+    
+    DynString* str1 = dynstring_create();
+    DynString* str2 = dynstring_create();
+
+    // Compare strings
+    Bool result;
+    Error err = dynstring_compare(str1, str2, &result);
+    if (!err.ok) return err;
+
+    // Check for length
+    if (result != true) {
+        return snitch ("Strings should be equal", __LINE__, __FILE__);
+    }
+
+    return (Error){ .ok = true };
+}
+
+Error check_user_inputs_for_comparing_strings(FxString* desc) {
+    *desc = fxstring_create("Dynstring: check invalid user inputs for comparing strings");
+    Error err;
+
+    DynString* str1 = dynstring_create();
+    err = dynstring_push_chars(str1, "foo");
+    if (!err.ok) return err;
+
+    DynString* str2;
+    DynString* str3;
+
+    // Compare strings
+    Bool res1, res2, res3;
+    err = dynstring_compare(str1, str2, &res1);
+    if (err.ok) return snitch ("Null input not caught", __LINE__, __FILE__);
+
+    err = dynstring_compare(str2, str1, &res2);
+    if (err.ok) return snitch ("Null input not caught", __LINE__, __FILE__);
+
+    err = dynstring_compare(str2, str3, &res3);
+    if (err.ok) return snitch ("Null input not caught", __LINE__, __FILE__);
+
+    return (Error){ .ok = true };
+}
 
 // Test_Result get_substring() {
 //     Test_Result res = { 

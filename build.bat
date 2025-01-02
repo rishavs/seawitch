@@ -12,8 +12,7 @@ SET MAIN_FILE=src\seawitch.c
 SET TEST_FILE=spec\runner.c
 
 SET SOURCE_FILES=src\core\errors.c ^
-    src\core\fxstring.c ^
-    src\core\dynstring.c
+    src\core\dyn_fx_string.c ^
     
     @REM src\core\dynstring.c 
     @REM src\core\dynarray.c
@@ -27,6 +26,9 @@ SET COMPILER_FLAGS= -Wall -Wextra ^
     -Wno-unused-variable -Wno-unused-parameter -Wno-unused-function -Wno-sign-conversion ^
     -Wno-newline-eof -Wno-deprecated-declarations -Wno-comment
 
+@REM Testing flags. Only used during testing
+SET TESTING_FLAGS= -Wno-maybe-uninitialized 
+
     REM -pedantic -Wall -Wextra ^
     REM -Wconversion -Wdouble-promotion -Wnull-dereference -Wwrite-strings  ^
     REM -Wformat=2 -Wcast-align -Wswitch-enum ^
@@ -37,7 +39,7 @@ REM Cleanup the previous build
 @REM del %TEST_EXECUTABLE%.exe
 
 REM Compile the C code
-%COMPILER% %COMPILER_FLAGS% -I%HEADERS_FOLDER% %TEST_FILE% %SOURCE_FILES% -o %TEST_EXECUTABLE%
+%COMPILER% %COMPILER_FLAGS% %TESTING_FLAGS% -I%HEADERS_FOLDER% %TEST_FILE% %SOURCE_FILES% -o %TEST_EXECUTABLE%
 
 REM Check if the compilation was successful
 IF %ERRORLEVEL% EQU 0 (

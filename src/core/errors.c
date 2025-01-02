@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <errno.h>
 
 #include "errors.h"
 #include "seawitch.h"
@@ -12,29 +13,35 @@ Error snitch(char* msg, Int64 line, char* filepath) {
     return (Error){ 
         .ok = false,
         .message = fxstring_create(msg),
-        .line = line,
-        .filepath = fxstring_create_from_behind(filepath)
+        .raised_on_line = line,
+        .raised_in_file = fxstring_create_from_behind(filepath)
     };
 }
 
 // Print error message and continue
 void yell(Error err) {
-    fprintf(stderr, "\033[0;31m");
-    perror("[ ERROR ]");
-    fprintf(stderr, "Error Name: %s\n", err.name.data);
-    fprintf(stderr, "Error Message: %s\n", err.message.data);
+    // printing in format <filename>:<line>:<column>: <message> makes it clickable in IDEs and editors
+    fprintf(stderr, "\033[0;31m%s:%lli:%lli: [ ERROR ] %s\n", 
+        err.raised_in_file.data, err.raised_on_line, err.pos, err.message.data);
     
-    if (err.details.len > 0) fprintf(stderr, "Error Details: %s\n", err.details.data);
-    if (err.hint.len > 0) fprintf(stderr, "Error Hint: %s\n", err.hint.data);
+    if (errno != 0) {
+        fprintf(stderr, "INTERNAL");
+    }
+        
+    // if(err.message.len > 0) fprintf(stderr, "Error Message: %s\n", err.message.data);
+    fprintf(stderr, "ERROR DETAILS:\n");
 
-    if (
-        err.pos > 0 && 
-        err.line > 0
-    ) fprintf(stderr, "Error Position: %lli:%lli\n", err.line, err.pos);
-    if (err.filepath.len > 0) fprintf(stderr, "Error File: %s\n", err.filepath.data);
+    if (err.name.len > 0) fprintf(stderr, "\tError Name: %s\n", err.name.data);
+    if (err.details.len > 0) fprintf(stderr, "\tError Details: %s\n", err.details.data);
+    if (err.hint.len > 0) fprintf(stderr, "\tError Hint: %s\n", err.hint.data);
+    
+    if (err.pos > 0) fprintf(stderr, "\tError Position: %lli\n", err.pos);
+    if (err.column > 0) fprintf(stderr, "\tError Column: %lli\n", err.column);
+    if (err.line > 0) fprintf(stderr, "\tError Line: %lli\n", err.line);
+    if (err.filepath.len > 0) fprintf(stderr, "\tError File: %s\n", err.filepath.data);
 
-    if (err.raised_on_line > 0)     fprintf(stderr, "Raised on line: %lli\n", err.raised_on_line);
-    if (err.raised_in_file.len > 0) fprintf(stderr, "Raised in file: %s\n", err.raised_in_file.data);
+    if (err.raised_on_line > 0)     fprintf(stderr, "\tRaised on line: %lli\n", err.raised_on_line);
+    if (err.raised_in_file.len > 0) fprintf(stderr, "\tRaised in file: %s\n", err.raised_in_file.data);
 
     fprintf(stderr, "\n\033[0m");
 }
