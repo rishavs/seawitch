@@ -34,20 +34,49 @@
 // create a new string and check length
 Error create_basic_dynstring() {
     DynString* str = dynstring_create();
+    if (str == NULL || str->data == NULL) return snitch ("Failed to create new string", __LINE__, __FILE__);
 
     // Check for length
     size_t str_size = strlen(str->data);
     Int64 len_via_strlen = (Int64)str_size;
+    if (str->len != 0 || str->len != len_via_strlen) {
+        return snitch ("Length of new string is wrong", __LINE__, __FILE__);
+    }
 
     Int64 len_via_loop = 0;
     while (str->data[len_via_loop] != '\0') {
         len_via_loop++;
     }
-    if (str->len != len_via_loop || str->len != len_via_strlen || str->len != 0) {
+    if (len_via_loop != 0) {
         return snitch ("Length of new string is wrong", __LINE__, __FILE__);
     }
 
     return (Error){ .ok = true };
+}
+
+Error push_chars_to_string() {
+    DynString* str = dynstring_create();
+    if (str == NULL || str->data == NULL) return snitch ("Failed to create new string", __LINE__, __FILE__);
+
+    // Push a c-string
+    Error err = dynstring_push_chars(str, "Hello, ");
+    if (!err.ok) return err;
+
+    // Push a char
+    err = dynstring_push_chars(str, (char[]){'W', '\0'});
+    if (!err.ok) return err;
+
+    // Push the rest of the string
+    err = dynstring_push_chars(str, "orld!");
+    if (!err.ok) return err;
+
+    // Check for length
+    if (str->len == 13) {
+        printf("%s\n", str->data);
+        return (Error){ .ok = true };
+    } else {
+        return snitch ("Length of new string is wrong", __LINE__, __FILE__);
+    }
 }
 
 // Test_Result push_str_chars_to_string() {

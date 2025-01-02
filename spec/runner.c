@@ -23,10 +23,17 @@ int main() {
 
     // Create an array of the tests
     Spec all_specs[] = {
-        { .desc = fxstring_create("DUMMY: This test must Pass"), .test = must_pass_fun },
-        { .desc = fxstring_create("DUMMY: This test must Fail"), .test = must_fail_fun },
+        // { .desc = fxstring_create("DUMMY: This test must Pass"), .test = must_pass_fun },
+        // { .desc = fxstring_create("DUMMY: This test must Fail"), .test = must_fail_fun },
 
-        { .desc = fxstring_create("Create a new dynamic string"), .test = create_basic_dynstring },
+        { .desc = fxstring_create("DynString: Create a new dynamic string"), .test = create_basic_dynstring },
+        { .desc = fxstring_create("DynString: Push chars to string"), .test = push_chars_to_string },
+        // { .desc = fxstring_create("Get substring from string"), .test = get_substring },
+        // { .desc = fxstring_create("Join multiple strings into a single string"), .test = join_strings },
+        // { .desc = fxstring_create("Compare two strings"), .test = compare_strings },
+        // { .desc = fxstring_create("Check if a string starts with a fragment"), .test = substring_at },
+        // { .desc = fxstring_create("Find a fragment in a string"), .test = find_fragment },
+        // { .desc = fxstring_create("Print string"), .test = print_string },
         // { .desc = fxstring_do_from_chars("Push cstr and chars to string", false), .test = push_str_chars_to_string },
     
         // End of tests

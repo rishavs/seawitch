@@ -20,11 +20,8 @@
 // Create an empty dynamic string
 DynString* dynstring_create();
 
-// Create a new dynamic string
-Error dynstring_do_create(DynString* str, const char* data);
-
 // append a fixed-string or char* to a string
-Error dynstring_do_push_cstr(DynString* src, char* data);
+Error dynstring_push_chars(DynString* src, char* data);
 
 // Get a substring from a string, given a start and end position
 Error dynstring_do_slice (DynString* src, DynString* result, Int64 start, Int64 end);

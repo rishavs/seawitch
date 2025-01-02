@@ -23,33 +23,8 @@ DynString* dynstring_create() {
     return str;
 }
 
-// Create a new dynamic string. 
-// Note that the input string may not be initialized, so we need to initialize it
-Error dynstring_do_create(DynString* str, char* data) {
-    if (data == NULL) return snitch("Null input", __LINE__, __FILE__);
-    
-    size_t str_size = strlen(data);
-    if (str_size > INT_MAX) return snitch("Integer overflow", __LINE__, __FILE__);
-    Int64 len = (Int64)str_size;
-
-    DynString* temp = calloc(1, sizeof(DynString));
-    if (temp == NULL) return snitch("Memory error", __LINE__, __FILE__);
-
-    str = temp;
-    str->len = len;
-    str->capacity = str->len + 1;
-    str->data = calloc(str->capacity, sizeof(char));
-    if (str->data == NULL) return snitch("Memory error", __LINE__, __FILE__);
-
-    memcpy(str->data, data, len);
-
-    str->data[len] = '\0'; 
-
-    return (Error){ .ok = true };
-}
-
 // append a fixed-string or char* to a string
-Error dynstring_do_push_cstr(DynString* src, char* data) {
+Error dynstring_push_chars(DynString* src, char* data) {
      if (src == NULL || data == NULL) return snitch("Null input", __LINE__, __FILE__);
 
     size_t str_size = strlen(data);
