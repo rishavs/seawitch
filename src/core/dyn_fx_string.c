@@ -122,7 +122,7 @@ Error dynstring_slice (DynString* src, DynString* result, Int64 start, Int64 end
 }
 
 Error dynstring_join(DynString* result, Int64 n, ...) {
-    if (result == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if (result == NULL || result->data == NULL) return snitch("Null input", __LINE__, __FILE__);
     if (n <= 0) return snitch("Out of bounds input", __LINE__, __FILE__);
 
     va_list args;

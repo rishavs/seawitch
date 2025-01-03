@@ -1,35 +1,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-// #include "testing.h"
 #include "dynstring.h"
 #include "seawitch.h"
-
-
-// // Create a new dynamic string
-// Error dynstring_do_create(DynString* str, char* data);
-
-// // append a fixed-string or char* to a string
-// Error dynstring_do_push_cstr(DynString* src, char* data);
-
-// // Get a substring from a string, given a start and end position
-// Error dynstring_do_slice (DynString* src, DynString* result, Int64 start, Int64 end);
-
-// // Join multiple strings into a single string
-// Error dynstring_do_join(DynString* result, Int64 n, ...);
-
-// // Compare two strings
-// Error dynstring_do_compare(DynString* str1, DynString* str2);
-
-// // Check if a string starts with a fragment
-// Error dynstring_do_substring_at(DynString* src, Int64 pos, DynString* frag);
-
-// // Find a fragment in a string
-// Error dynstring_do_find(DynString* src, Int64* result_at, DynString* frag);
-
-// // Print string
-// Error dynstring_do_print(DynString* str, bool print_newline);
-
 
 // create a new string and check length
 Error create_basic_dynstring(FxString* desc) {
@@ -107,7 +80,7 @@ Error slice_string (FxString *desc) {
     return (Error){ .ok = true };
 }
 
-Error check_user_inputs_for_slicing_string(FxString* desc ) {
+Error handle_invalid_inputs_for_slicing_string(FxString* desc ) {
     *desc = fxstring_create("Dynstring: can handle invalid user inputs for slicing string");
     
     DynString* str = dynstring_create();
@@ -246,11 +219,10 @@ Error join_single_string(FxString* desc) {
     return (Error){ .ok = true };
 }
 
-Error check_user_inputs_for_joining_strings(FxString* desc) {
+Error handle_invalid_inputs_for_joining_strings(FxString* desc) {
     *desc = fxstring_create("Dynstring: can handle invalid user inputs for joining strings");
     Error err;
 
-    DynString* null_str;
     DynString* str1 = dynstring_create();
     err = dynstring_push_chars(str1, "Hello, ");
     if (!err.ok) return err;
@@ -260,14 +232,6 @@ Error check_user_inputs_for_joining_strings(FxString* desc) {
     if (!err.ok) return err;
 
     DynString* res = dynstring_create();
-
-    // check if null result string is caught
-    err = dynstring_join(null_str, 2, str1, str2);
-    if (err.ok) return snitch ("Null input not caught", __LINE__, __FILE__);
-
-    // check if null string is caught
-    err = dynstring_join(res, 2, str1, null_str);
-    if (err.ok) return snitch ("Null input not caught", __LINE__, __FILE__);
 
     // check if zero strings are caught
     err = dynstring_join(res, 0);
@@ -332,32 +296,7 @@ Error compare_empty_strings(FxString* desc) {
     return (Error){ .ok = true };
 }
 
-Error check_user_inputs_for_comparing_strings(FxString* desc) {
-    *desc = fxstring_create("Dynstring: check invalid user inputs for comparing strings");
-    Error err;
-
-    DynString* str1 = dynstring_create();
-    err = dynstring_push_chars(str1, "foo");
-    if (!err.ok) return err;
-
-    DynString* str2;
-    DynString* str3;
-
-    // Compare strings
-    Bool res1, res2, res3;
-    err = dynstring_compare(str1, str2, &res1);
-    if (err.ok) return snitch ("Null input not caught", __LINE__, __FILE__);
-
-    // err = dynstring_compare(str2, str1, &res2);
-    // if (err.ok) return snitch ("Null input not caught", __LINE__, __FILE__);
-
-    // err = dynstring_compare(str2, str3, &res3);
-    // if (err.ok) return snitch ("Null input not caught", __LINE__, __FILE__);
-
-    return (Error){ .ok = true };
-}
-
-Error get_substring_at_given_pos(FxString* desc) {
+Error check_substring_at_given_pos(FxString* desc) {
     *desc = fxstring_create("Dynstring: can get substring from a string at given position");
     
     DynString* str = dynstring_create();
@@ -392,6 +331,39 @@ Error get_substring_at_given_pos(FxString* desc) {
     if (!found3) {
         return snitch ("Substring not found", __LINE__, __FILE__);
     }
+
+    return (Error){ .ok = true };
+}
+
+Error handle_invalid_inputs_for_checking_substring(FxString* desc) {
+    *desc = fxstring_create("Dynstring: can handle invalid user inputs for hcecking substring");
+    Error err;
+
+    // dynstring_substring_at(DynString* src, DynString* frag, Int64 pos, Bool* result)
+
+    DynString* str = dynstring_create();
+    err = dynstring_push_chars(str, "Hello, World!");
+    if (!err.ok) return err;
+
+    // Get substring
+    Bool res1;
+    DynString* frag1 = dynstring_create();
+    err = dynstring_push_chars(frag1, "World!");
+    if (!err.ok) return err;
+
+    err = dynstring_substring_at(str, frag1, -1, &res1);
+    if (err.ok) return snitch ("Negative start index not caught", __LINE__, __FILE__);
+
+    err = dynstring_substring_at(str, frag1, 100, &res1);
+    if (err.ok) return snitch ("End index out of bounds not caught", __LINE__, __FILE__);
+
+    // now check for emty strings
+    Bool res2;
+    DynString* frag2 = dynstring_create();
+
+    err = dynstring_substring_at(str, frag2, 0, &res2);
+    if (!err.ok) return err;
+    if (!res2) return snitch ("Substring not found", __LINE__, __FILE__);
 
     return (Error){ .ok = true };
 }

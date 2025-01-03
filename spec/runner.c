@@ -28,15 +28,15 @@ Spec all_specs[] = {
     create_basic_dynstring,
     push_chars_to_string,
     slice_string,
-    check_user_inputs_for_slicing_string,
+    handle_invalid_inputs_for_slicing_string,
     join_multiple_strings,
     join_string_with_empty_string,
     join_single_string,
-    check_user_inputs_for_joining_strings,
+    handle_invalid_inputs_for_joining_strings,
     compare_strings,
     compare_empty_strings,
-    check_user_inputs_for_comparing_strings,
-    get_substring_at_given_pos,
+    check_substring_at_given_pos,
+    handle_invalid_inputs_for_checking_substring,
 
     // End of tests
     NULL

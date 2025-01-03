@@ -27,7 +27,8 @@ SET COMPILER_FLAGS= -Wall -Wextra ^
     -Wno-newline-eof -Wno-deprecated-declarations -Wno-comment
 
 @REM Testing flags. Only used during testing
-SET TESTING_FLAGS= -Wno-maybe-uninitialized 
+SET TESTING_FLAGS= 
+@REM -Wno-maybe-uninitialized 
 
     REM -pedantic -Wall -Wextra ^
     REM -Wconversion -Wdouble-promotion -Wnull-dereference -Wwrite-strings  ^
