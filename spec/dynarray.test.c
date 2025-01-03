@@ -207,6 +207,99 @@ Error slice_int_array(FxString *desc) {
     return (Error){ .ok = true };
 }
 
+Error handle_invalid_input_for_slicing_array(FxString *desc) {
+    *desc = fxstring_create("Array: Can handle invalid inputs for slicing array");
+    Error err;
+
+    DynArray* arr = dynarray_create(INT64, sizeof(Int64), 8);
+    err = dynarray_push(arr, &(Int64){1}, sizeof(Int64)); if (!err.ok) return err;
+    err = dynarray_push(arr, &(Int64){2}, sizeof(Int64)); if (!err.ok) return err;
+    err = dynarray_push(arr, &(Int64){3}, sizeof(Int64)); if (!err.ok) return err;
+    err = dynarray_push(arr, &(Int64){4}, sizeof(Int64)); if (!err.ok) return err;
+    err = dynarray_push(arr, &(Int64){5}, sizeof(Int64)); if (!err.ok) return err;
+
+    // Slice with wrong start index
+    DynArray* sliced1 = dynarray_create(INT64, sizeof(Int64), 8);
+    err = dynarray_slice(arr, sliced1, -1, 3);
+    if (err.ok) return snitch ("No check for wrong start index", __LINE__, __FILE__);
+
+    // Slice with wrong end index
+    DynArray* sliced2 = dynarray_create(INT64, sizeof(Int64), 8);
+    err = dynarray_slice(arr, sliced2, 1, 100);
+    if (err.ok) return snitch ("No check for wrong end index", __LINE__, __FILE__);
+
+    // Slice with start index greater than end index
+    DynArray* sliced3 = dynarray_create(INT64, sizeof(Int64), 8);
+    err = dynarray_slice(arr, sliced3, 3, 1);
+    if (err.ok) return snitch ("No check for start index greater than end index", __LINE__, __FILE__);
+
+    // Slice with empty slice array
+    DynArray* empty_slice = dynarray_create(INT64, sizeof(Int64), 8);
+    err = dynarray_slice(arr, empty_slice, 0, 4); if (!err.ok) return err;
+    
+    // Check if the original array is not modified
+    Int64 val1;
+    err = dynarray_get(arr, 0, &val1); if (!err.ok) return err;
+    
+    if (val1 != 1) return snitch ("Original array is modified after slicing", __LINE__, __FILE__);
+
+    return (Error){ .ok = true };
+}
+
+Error join_multiple_arrays(FxString *desc) {
+    *desc = fxstring_create("Array: Can join multiple int arrays");
+    Error err;
+
+    DynArray* arr1 = dynarray_create(INT64, sizeof(Int64), 8);
+    err = dynarray_push(arr1, &(Int64){1}, sizeof(Int64)); if (!err.ok) return err;
+    err = dynarray_push(arr1, &(Int64){2}, sizeof(Int64)); if (!err.ok) return err;
+
+    DynArray* arr2 = dynarray_create(INT64, sizeof(Int64), 8);
+    err = dynarray_push(arr2, &(Int64){3}, sizeof(Int64)); if (!err.ok) return err;
+    err = dynarray_push(arr2, &(Int64){4}, sizeof(Int64)); if (!err.ok) return err;
+
+    DynArray* arr3 = dynarray_create(INT64, sizeof(Int64), 8);
+    err = dynarray_push(arr3, &(Int64){5}, sizeof(Int64)); if (!err.ok) return err;
+
+    DynArray* joined = dynarray_create(INT64, sizeof(Int64), 8);
+    err = dynarray_join(joined, 3, arr1, arr2, arr3); if (!err.ok) return err;
+
+    Int64 val1, val2, val3, val4, val5;
+    err = dynarray_get(joined, 0, &val1); if (!err.ok) return err;
+    err = dynarray_get(joined, 1, &val2); if (!err.ok) return err;
+    err = dynarray_get(joined, 2, &val3); if (!err.ok) return err;
+    err = dynarray_get(joined, 3, &val4); if (!err.ok) return err;
+    err = dynarray_get(joined, 4, &val5); if (!err.ok) return err;
+
+    if (joined->len != 5 || val1 != 1 || val2 != 2 || val3 != 3 || val4 != 4 || val5 != 5) {
+        return snitch("Array joining failed", __LINE__, __FILE__);
+    }
+
+    // Can join with 0 arrays
+
+    // Can join with 1 array
+
+    // Can join empty arrays
+
+    // check if n is <= 0
+    DynArray* joined2 = dynarray_create(INT64, sizeof(Int64), 8);
+    err = dynarray_join(joined2, 0, arr1, arr2, arr3);
+    if (err.ok) return snitch ("No check for n <= 0", __LINE__, __FILE__);
+
+    // check if n > actual number of items
+    DynArray* joined3 = dynarray_create(INT64, sizeof(Int64), 8);
+    err = dynarray_join(joined3, 5, arr1, arr2, arr3);
+    if (err.ok) return snitch ("No check for n > actual number of items", __LINE__, __FILE__);
+
+    return (Error){ .ok = true };
+}
+
+
+
+
+
+
+
 // Test_Result can_slice_int_array() {
 //     Test_Result res = { 
 //         .desc = dynstring_create("Array: Can slice an int array"),

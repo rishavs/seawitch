@@ -50,6 +50,8 @@ Spec all_specs[] = {
     get_set_on_byte_array,
     handle_invalid_input_for_get_set_on_byte_array,
     slice_int_array,
+    handle_invalid_input_for_slicing_array,
+    join_multiple_arrays,
 
     // End of tests
     NULL

@@ -138,6 +138,78 @@ Error dynarray_slice(DynArray* dynarray, DynArray* slice, Int64 start, Int64 end
 }
 
 
+Error dynarray_join(DynArray* joined, Int64 n, ...) {
+
+    if (joined == NULL || joined->data == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if (n <= 0) return snitch("Out of bounds input", __LINE__, __FILE__);
+
+    va_list args;
+    va_start(args, n);
+
+    // Get the first dynarray (outside the loop)
+    DynArray* first_dynarray = va_arg(args, DynArray*);
+    if (first_dynarray == NULL || first_dynarray->data == NULL) {
+        va_end(args);
+        return snitch("Null input", __LINE__, __FILE__);
+    }
+
+    Types item_type = first_dynarray->item_type;
+    Int64 item_size = first_dynarray->item_size;
+
+    Int64 total_len = 0;
+
+    //Check for null inputs and type and size consistancy
+    va_list args_len_check;
+    va_copy(args_len_check, args);
+
+    for (Int64 i = 0; i < n - 1; i++) { // n-1 because we already processed the first
+        DynArray* dynarray = va_arg(args_len_check, DynArray*);
+        if (dynarray == NULL || dynarray->data == NULL) {
+            va_end(args);
+            va_end(args_len_check);
+            return snitch("Invalid input", __LINE__, __FILE__);
+        }
+        if (dynarray->item_type != item_type || dynarray->item_size != item_size) {
+            va_end(args);
+            va_end(args_len_check);
+            return snitch("Invalid input", __LINE__, __FILE__);
+        }
+        total_len += dynarray->len;
+    }
+    va_end(args_len_check);
+    total_len += first_dynarray->len;
+
+    // Update the joined dynarray (allocate memory)
+    joined->item_type = item_type;
+    joined->item_size = item_size;
+    joined->len = total_len;
+    joined->capacity = total_len > 0 ? total_len * 2: 1; // Double the capacity or 1 if len is 0.
+    joined->data = realloc(joined->data, joined->capacity * item_size);
+    if (!joined->data) {
+        va_end(args);
+        return snitch("Memory error", __LINE__, __FILE__);
+    }
+
+    // Copy elements (correct va_arg usage)
+    Int64 offset = 0;
+    // memcpy((Byte*)joined->data + offset * item_size, first_dynarray->data, first_dynarray->len * item_size);
+    void* res1 = memmove((Byte*)joined->data + offset * item_size, first_dynarray->data, first_dynarray->len * item_size);
+    if (!res1) fatal(snitch("Memory error", __LINE__, __FILE__));
+
+    offset += first_dynarray->len;
+    for (Int64 i = 0; i < n - 1; i++) { // n-1 because we already processed the first
+        DynArray* dynarray = va_arg(args, DynArray*);
+        // memcpy((Byte*)joined->data + offset * item_size, dynarray->data, dynarray->len * item_size);
+        void* res2 = memmove((Byte*)joined->data + offset * item_size, dynarray->data, dynarray->len * item_size);
+        if (!res2) fatal(snitch("Memory error", __LINE__, __FILE__));
+
+        offset += dynarray->len;
+    }
+    va_end(args);
+
+    return (Error){.ok = true};
+}
+
 // Run a function On Each item. Outcome of the operations are accumulated in the acc
 // Can be used for both mapping and reducing. 
 // For mapping, the acc is another array
@@ -154,66 +226,6 @@ Error dynarray_oneach(DynArray* dynarray, void* acc, Error (*fn)(Int64, Int64, v
 
     return (Error){ .ok = true };
 }
-
-// DynArray *dynarray_join(Int64 n, ...) {
-//     if (n <= 0) return print_error_return_null(__FILE__, __LINE__);
-
-//     va_list args;
-//     va_start(args, n);
-
-//     DynArray* first_dynarray = va_arg(args, DynArray*);
-//     if (!first_dynarray) {
-//         va_end(args);
-//         return print_error_return_null(__FILE__, __LINE__);
-//     }
-
-//     Types item_type = first_dynarray->item_type;
-//     Int64 item_size = first_dynarray->item_size;
-
-//     // Check type and size consistency
-//     for (Int64 i = 0; i < n ; i++) {
-//         DynArray *dynarray = va_arg(args, DynArray*);
-//         if (!dynarray || dynarray->item_type != item_type || dynarray->item_size != item_size) {
-//             va_end(args);
-//             return print_error_return_null(__FILE__, __LINE__);
-//         }
-//     }
-//     va_end(args);
-
-//     // Calculate total length
-//     va_start(args, n);
-//     Int64 total_len = 0;
-//     for (Int64 i = 0; i < n; i++) {
-//         DynArray *dynarray = va_arg(args, DynArray *);
-//         if (dynarray) {
-//             total_len += dynarray->len;
-//         }
-//     }
-//     va_end(args);
-
-//     // Create joined dynarray
-//     DynArray *joined_dynarray = dynarray_create(item_type, item_size, total_len * 2); // Double the capacity
-//     joined_dynarray->len = total_len; // Set the correct length
-
-//     // Copy elements
-//     va_start(args, n);
-//     Int64 offset = 0;
-//     for (Int64 i = 0; i < n; i++) {
-//         DynArray *dynarray = va_arg(args, DynArray *);
-//         if (dynarray) {
-//             memcpy(
-//                 joined_dynarray->data + offset * item_size, 
-//                 dynarray->data, 
-//                 dynarray->len * item_size
-//             );
-//             if (!dynarray->data) return print_error_return_null(__FILE__, __LINE__);
-//             offset += dynarray->len;
-//         }
-//     }
-//     va_end(args);
-
-//     return joined_dynarray;
-// }
 
 // // TODO - also send length of the array
 
