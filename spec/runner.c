@@ -49,6 +49,7 @@ Spec all_specs[] = {
     push_and_pop_from_array,
     get_set_on_byte_array,
     handle_invalid_input_for_get_set_on_byte_array,
+    slice_int_array,
 
     // End of tests
     NULL

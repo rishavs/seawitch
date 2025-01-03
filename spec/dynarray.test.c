@@ -8,8 +8,12 @@
 #include "seawitch.h"
 
 // helper function - print int
-Error print_int(Int64 i, void* acc, void* item) {
-    printf("%lli ", *(Int64*)item);
+Error print_int(Int64 len, Int64 i, void* acc, void* item) {
+    if (i == 0) printf("[ ");
+    printf("%lli", *(Int64*)item);
+    if (i != len - 1) printf(", ");
+    if (i == len - 1) printf(" ]");
+
     return (Error){ .ok = true };
 }
 
@@ -155,7 +159,53 @@ Error handle_invalid_input_for_get_set_on_byte_array(FxString *desc) {
     return (Error){ .ok = true };
 }
 
+Error slice_int_array(FxString *desc) {
+    *desc = fxstring_create("Array: Can slice an int array");
+    Error err;
 
+    DynArray* arr = dynarray_create(INT64, sizeof(Int64), 8);
+    err = dynarray_push(arr, &(Int64){1}, sizeof(Int64)); if (!err.ok) return err; // 0
+    err = dynarray_push(arr, &(Int64){2}, sizeof(Int64)); if (!err.ok) return err; // 1
+    err = dynarray_push(arr, &(Int64){3}, sizeof(Int64)); if (!err.ok) return err; // 2
+    err = dynarray_push(arr, &(Int64){4}, sizeof(Int64)); if (!err.ok) return err; // 3
+    err = dynarray_push(arr, &(Int64){5}, sizeof(Int64)); if (!err.ok) return err; // 4
+
+    DynArray* sliced1 = dynarray_create(INT64, sizeof(Int64), 8);
+    err = dynarray_slice(arr, sliced1, 1, 3); if (!err.ok) return err;
+    Int64 val1, val2, val3;
+    err = dynarray_get(sliced1, 0, &val1); if (!err.ok) return err;
+    err = dynarray_get(sliced1, 1, &val2); if (!err.ok) return err;
+    err = dynarray_get(sliced1, 2, &val3); if (!err.ok) return err;
+
+    if (sliced1->len != 3 || val1 != 2 || val2 != 3 || val3 != 4) {
+        return snitch("Array slicing failed", __LINE__, __FILE__);
+    }
+
+    // now slice entire array
+    DynArray* sliced2 = dynarray_create(INT64, sizeof(Int64), 8);
+    err = dynarray_slice(arr, sliced2, 0, 4); if (!err.ok) return err;
+    Int64 val4, val5, val6, val7, val8;
+    err = dynarray_get(sliced2, 0, &val4); if (!err.ok) return err;
+    err = dynarray_get(sliced2, 1, &val5); if (!err.ok) return err;
+    err = dynarray_get(sliced2, 2, &val6); if (!err.ok) return err;
+    err = dynarray_get(sliced2, 3, &val7); if (!err.ok) return err;
+    err = dynarray_get(sliced2, 4, &val8); if (!err.ok) return err;
+
+    if (sliced2->len != 5 || val4 != 1 || val5 != 2 || val6 != 3 || val7 != 4 || val8 != 5) {
+        return snitch("Array slicing failed", __LINE__, __FILE__);
+    }
+
+    // Can slice only 1 item
+    DynArray* sliced3 = dynarray_create(INT64, sizeof(Int64), 8);
+    err = dynarray_slice(arr, sliced3, 2, 2); if (!err.ok) return err;
+    Int64 val9;
+    err = dynarray_get(sliced3, 0, &val9); if (!err.ok) return err;
+    if (sliced3->len != 1 || val9 != 3) {
+        return snitch("Array slicing failed", __LINE__, __FILE__);
+    }
+
+    return (Error){ .ok = true };
+}
 
 // Test_Result can_slice_int_array() {
 //     Test_Result res = { 

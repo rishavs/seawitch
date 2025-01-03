@@ -113,32 +113,47 @@ Error dynarray_set (DynArray* dynarray, Int64 index, void* item, Int64 item_size
     return (Error){ .ok = true };
 }
 
-// // Slice the dynarray from start to end. Both inclusive
-// DynArray* dynarray_slice(DynArray* dynarray, Int64 start, Int64 end) {
-//     if (!dynarray) return print_error_return_null(__FILE__, __LINE__);
+// Slice the dynarray from start to end. Both inclusive
+Error dynarray_slice(DynArray* dynarray, DynArray* slice, Int64 start, Int64 end) {
+    if (dynarray == NULL || dynarray->data == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if (slice == NULL || slice->data == NULL) return snitch("Null input", __LINE__, __FILE__);
 
-//     // Bounds checking
-//     if (start >= dynarray->len || end < start || end >= dynarray->len) return NULL;
+    // Bounds checking
+    if (start < 0 || end < 0 || end < start) return snitch("Out of bounds input", __LINE__, __FILE__);
+    if (start >= dynarray->len || end >= dynarray->len) return snitch("Out of bounds input", __LINE__, __FILE__);
 
-//     // Calculate new length
-//     Int64 new_len = end - start + 1;
-            
-//     // Create new array
-//     DynArray* new_dynarray = dynarray_create(dynarray->item_type, dynarray->item_size, new_len * 2);
-//     if (!new_dynarray) return print_error_return_null(__FILE__, __LINE__);
-    
-//     new_dynarray->len = new_len;
+    // If slice is not empty, throw error
+    if (slice->len > 0) return snitch("Invalid data", __LINE__, __FILE__);
 
-//     // Perform the copy
-//     memcpy(
-//         new_dynarray->data,
-//         (Byte*)dynarray->data + (start * dynarray->item_size),
-//         new_len * dynarray->item_size
-//     );
-//     if (!new_dynarray->data) return print_error_return_null(__FILE__, __LINE__);
+    // Update the slice array
+    slice->len = end - start + 1;
+    slice->capacity = slice->len * 2; // Double the capacity
+    slice->data = calloc(slice->capacity, dynarray->item_size);    
+    if (!slice->data) fatal (snitch("Memory error", __LINE__, __FILE__));
 
-//     return new_dynarray;
-// }
+    void* res = memmove(slice->data, (Byte*)dynarray->data + (start * dynarray->item_size), slice->len * dynarray->item_size);
+    if (!res) fatal(snitch("Memory error", __LINE__, __FILE__));
+
+    return (Error){ .ok = true };
+}
+
+
+// Run a function On Each item. Outcome of the operations are accumulated in the acc
+// Can be used for both mapping and reducing. 
+// For mapping, the acc is another array
+// For reducing, the acc is any value type
+Error dynarray_oneach(DynArray* dynarray, void* acc, Error (*fn)(Int64, Int64, void*, void*)) {
+    if (dynarray == NULL || dynarray->data == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if (acc == NULL || fn == NULL) return snitch("Invalid input", __LINE__, __FILE__);
+
+    for (Int64 i = 0; i < dynarray->len; i++) {
+        void* item = (Byte*)dynarray->data + i * dynarray->item_size;
+        Error err = fn(dynarray->len, i, acc, item);  // fn should modify result in place
+        if (!err.ok) return err;
+    }
+
+    return (Error){ .ok = true };
+}
 
 // DynArray *dynarray_join(Int64 n, ...) {
 //     if (n <= 0) return print_error_return_null(__FILE__, __LINE__);
@@ -202,22 +217,6 @@ Error dynarray_set (DynArray* dynarray, Int64 index, void* item, Int64 item_size
 
 // // TODO - also send length of the array
 
-// Run a function On Each item. Outcome of the operations are accumulated in the acc
-// Can be used for both mapping and reducing. 
-// For mapping, the acc is another array
-// For reducing, the acc is any value type
-Error dynarray_oneach(DynArray* dynarray, void* acc, Error (*fn)(Int64, void*, void*)) {
-    if (dynarray == NULL || dynarray->data == NULL) return snitch("Null input", __LINE__, __FILE__);
-    if (acc == NULL || fn == NULL) return snitch("Invalid input", __LINE__, __FILE__);
-
-    for (Int64 i = 0; i < dynarray->len; i++) {
-        void* item = (Byte*)dynarray->data + i * dynarray->item_size;
-        Error err = fn(i, acc, item);  // fn should modify result in place
-        if (!err.ok) return err;
-    }
-
-    return (Error){ .ok = true };
-}
 
 // // Filter function. Iterates over the dynarray and applies the predicate to each element.
 // // Returns a new array with only thos elements that satisfy the predicate
@@ -310,17 +309,12 @@ Error dynarray_oneach(DynArray* dynarray, void* acc, Error (*fn)(Int64, void*, v
 // get overlap with other array - intersects
 
 // Other methods
-// each - iterate over each element in a list. Alternative to for loop
-// map - apply a function to each element in a list and return a new list
-// reduce - apply a function to each element in a list and return a single value
-// filter - return a new list with elements that satisfy a condition
-// find - return the first element that satisfies a condition
-// sort - sort the list
-// reverse - reverse the list
+// to string
+// pretty print
 // slice - return a new list with elements from a start to an end index
 // splice - remove elements from a list and optionally add new elements
-// indexOf - find the index of an element in a list
-// lastIndexOf - find the last index of an element in a list
+// find first
+// find all
 // includes - check if a list includes a specific element
 // some - check if any element in a list satisfies a condition
 // every - check if all elements in a list satisfy a condition
