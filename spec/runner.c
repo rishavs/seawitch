@@ -45,6 +45,10 @@ Spec all_specs[] = {
     // Dyn array tests
     // -----------------------------------------------    
     create_int_array_and_get_values,
+    handle_invalid_inputs_for_array_push,
+    push_and_pop_from_array,
+    get_set_on_byte_array,
+    handle_invalid_input_for_get_set_on_byte_array,
 
     // End of tests
     NULL

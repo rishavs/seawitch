@@ -28,9 +28,11 @@ DynArray* dynarray_create(Types item_type, Int64 item_size, Int64 initial_capaci
     return dynarray;
 }
 
-Error dynarray_push(DynArray* dynarray, void* item) {
+Error dynarray_push(DynArray* dynarray, void* item, Int64 item_size) {
     if (dynarray == NULL || dynarray->data == NULL ) return snitch("Null input", __LINE__, __FILE__);
     if (item == NULL) return snitch("Invalid input", __LINE__, __FILE__);
+
+    if (dynarray->item_size != item_size || item_size == 0) return snitch("Invalid input", __LINE__, __FILE__);
 
     if (dynarray->len == dynarray->capacity) {
         Int64 new_capacity = dynarray->capacity * 2;
@@ -89,12 +91,15 @@ Error dynarray_get(DynArray* dynarray, Int64 index, void* out) {
 }
 
 // Set the value at the index
-Error dynarray_set (DynArray* dynarray, Int64 index, void* item) {
+Error dynarray_set (DynArray* dynarray, Int64 index, void* item, Int64 item_size) {
     if (dynarray == NULL || dynarray->data == NULL) return snitch("Null input", __LINE__, __FILE__);
     if (item == NULL) return snitch("Invalid input", __LINE__, __FILE__);
 
     // check if the index is out of bounds
     if (index < 0 || index >= dynarray->len) return snitch("Out of bounds input", __LINE__, __FILE__);
+
+    // check if the item size is correct
+    if (dynarray->item_size != item_size || item_size == 0) return snitch("Invalid input", __LINE__, __FILE__);
 
     // If the dynarray is empty
     if (dynarray->len == 0) return snitch("Out of bounds input", __LINE__, __FILE__);

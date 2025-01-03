@@ -31,7 +31,7 @@ typedef struct {
 DynArray* dynarray_create(Types item_type, Int64 item_size, Int64 initial_capacity);
 
 // Push an item to the end of the dynarray
-Error dynarray_push(DynArray* dynarray, void* item);
+Error dynarray_push(DynArray* dynarray, void* item, Int64 item_size);
 
 // Pop an item from the end of the dynarray
 Error dynarray_pop(DynArray* dynarray, void* out);
@@ -40,7 +40,7 @@ Error dynarray_pop(DynArray* dynarray, void* out);
 Error dynarray_get(DynArray* dynarray, Int64 index, void* out);
 
 // Set the value at the index
-Error dynarray_set (DynArray* dynarray, Int64 index, void* item);
+Error dynarray_set (DynArray* dynarray, Int64 index, void* item, Int64 item_size);
 
 // Run a function On Each item. Outcome of the operations are accumulated in the acc
 // Can be used for both mapping and reducing. or for printing.

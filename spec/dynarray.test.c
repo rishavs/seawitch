@@ -26,11 +26,13 @@ Error create_int_array_and_get_values(FxString *desc) {
     Error err;
 
     DynArray* arr = dynarray_create(INT64, sizeof(Int64), 8);
-    err = dynarray_push(arr, &(Int64){1}); if (!err.ok) return err;
-    err = dynarray_push(arr, &(Int64){2}); if (!err.ok) return err;
-    err = dynarray_push(arr, &(Int64){3}); if (!err.ok) return err;
-    err = dynarray_push(arr, &(Int64){4}); if (!err.ok) return err;
-    err = dynarray_push(arr, &(Int64){5}); if (!err.ok) return err;
+    Int64 item_size = (Int64)sizeof(Int64);   //no overflow check required, as the value will be very small
+
+    err = dynarray_push(arr, &(Int64){1}, item_size); if (!err.ok) return err;
+    err = dynarray_push(arr, &(Int64){2}, item_size); if (!err.ok) return err;
+    err = dynarray_push(arr, &(Int64){3}, item_size); if (!err.ok) return err;
+    err = dynarray_push(arr, &(Int64){4}, item_size); if (!err.ok) return err;
+    err = dynarray_push(arr, &(Int64){5}, item_size); if (!err.ok) return err;
 
     // Check if the array is correct
     if (arr->len != 5) return snitch ("Array length is incorrect", __LINE__, __FILE__);
@@ -43,103 +45,117 @@ Error create_int_array_and_get_values(FxString *desc) {
         return snitch("Array values are incorrect", __LINE__, __FILE__);
     }
 
-
     err = dynarray_oneach(arr, &(Int64){0}, print_int);
     if (!err.ok) return err;
     printf("\n");
 
-    // if(
-    //     arr->len == 5 &&
-    //     *(Int64*)dynarray_get(arr, 0, &(Int64){0}) == 1 &&
-    //     *(Int64*)dynarray_get(arr, 4, &(Int64){0}) == 5 &&
+    return (Error){ .ok = true };
+}
 
-    //     // Out of bounds check
-    //     dynarray_get(arr, 5, &(Int64){0}) == NULL &&
-    //     dynarray_get(arr, 100, &(Int64){0}) == NULL
+Error handle_invalid_inputs_for_array_push(FxString *desc) {
+    *desc = fxstring_create("Array: Can handle invalid inputs for array push");
+    Error err;
 
-    //     // *(Int64*)(arr->data) == 1 &&
-    //     // *(Int64*)(arr->data + 1 * sizeof(Int64)) == 2 &&
-    //     // *(Int64*)(arr->data + 2 * sizeof(Int64)) == 3 &&
-    //     // *(Int64*)(arr->data + 3 * sizeof(Int64)) == 4 &&
-    //     // *(Int64*)(arr->data + 4 * sizeof(Int64)) == 5
-    // ) {
-    //     res.passed = true;
-    // } 
-
-    // // Push a wrong type
-    // err = dynarray_push(arr, &(Point){1, 2}); 
-    // if (err.ok) return snitch ("No check for Invalid type", __LINE__, __FILE__);
-
+    DynArray* arr = dynarray_create(INT64, sizeof(Int64), 8);
+    
+    // Push a wrong type
+    err = dynarray_push(arr, &(Point){1, 2}, 0); 
+    if (err.ok) return snitch ("No check for Invalid type", __LINE__, __FILE__);
 
     return (Error){ .ok = true };
 }
 
-// Test_Result can_push_and_pop_int_array() {
-//     Test_Result res = { 
-//         .desc = dynstring_create("Array: Can push and pop an int array"),
-//         .passed = false 
-//     };
+Error push_and_pop_from_array(FxString *desc) {
+    *desc = fxstring_create("Array: Can push and pop from an int array");
+    Error err;
 
-//     DynArray* arr = dynarray_create(INT64, sizeof(Int64), 8);
-//     dynarray_push(arr, &(Int64){1});
-//     dynarray_push(arr, &(Int64){2});
+    DynArray* arr = dynarray_create(INT64, (Int64)sizeof(Int64), 8);
+    err = dynarray_push(arr, &(Int64){1}, (Int64)sizeof(Int64)); if (!err.ok) return err;
+    err = dynarray_push(arr, &(Int64){2}, (Int64)sizeof(Int64)); if (!err.ok) return err;
+    if (arr->len != 2) return snitch ("Wrong array length after Push", __LINE__, __FILE__);
 
-//     Int64 out1, out2;
-//     dynarray_pop(arr, &out1);
+    Int64 out;
+    err = dynarray_pop(arr, &out); if (!err.ok) return err;
+    if (out != 2 || arr->len != 1) return snitch ("Pop operation failed", __LINE__, __FILE__);
 
-//     if (out1 == 2 && arr->len == 1) {
-//         res.passed = true;
-//     }
+    err = dynarray_push(arr, &(Int64){3}, (Int64)sizeof(Int64)); if (!err.ok) return err;
+    err = dynarray_push(arr, &(Int64){4}, (Int64)sizeof(Int64)); if (!err.ok) return err;
+    if (arr->len != 3) return snitch ("Wrong array length after Push", __LINE__, __FILE__);
 
-//     // push into the array again
-//     dynarray_push(arr, &(Int64){3});
-//     dynarray_push(arr, &(Int64){4});
-    
-//     // get the value at the index
-//     if (arr->len == 3 &&
-//         *(Int64*)dynarray_get(arr, 0, &(Int64){0}) == 1 &&
-//         *(Int64*)dynarray_get(arr, 1, &(Int64){0}) == 3 &&
-//         *(Int64*)dynarray_get(arr, 2, &(Int64){0}) == 4
-//     ) {
-//         res.passed = true;
-//     } else {
-//         res.passed = false;
-//     }
-   
-//     return res;
-// }
+    // Pop all items
+    Int64 out1, out2, out3;
+    err = dynarray_pop(arr, &out1); if (!err.ok) return err;
+    err = dynarray_pop(arr, &out2); if (!err.ok) return err;
+    err = dynarray_pop(arr, &out3); if (!err.ok) return err;
 
-// Test_Result can_get_set_int_array() {
-//     Test_Result res = { 
-//         .desc = dynstring_create("Array: Can get and set an int array"),
-//         .passed = false 
-//     };
+    if (arr->len != 0) return snitch ("Wrong array length after Pop", __LINE__, __FILE__);
+    if (out1 != 4 || out2 != 3 || out3 != 1) return snitch ("Pop operation failed", __LINE__, __FILE__);
 
-//     DynArray* arr = dynarray_create(INT64, sizeof(Int64), 8);
-//     dynarray_push(arr, &(Int64){1});
-//     dynarray_push(arr, &(Int64){2});
+    // pop empty array
+    Int64 out4;
+    err = dynarray_pop(arr, &out4); 
+    if (err.ok) return snitch ("No check for Pop from empty array", __LINE__, __FILE__);
 
-//     Int64 new_elem = 100;
-//     dynarray_set(arr, 0, &new_elem);
+    return (Error){ .ok = true };
+}
 
-//     Int64 another_elem = 1000;
-//     dynarray_set(arr, 0, &another_elem);
+Error get_set_on_byte_array(FxString *desc) {
+    *desc = fxstring_create("Array: Can get and set a byte array");
+    Error err;
 
-//     if (arr->len == 2 && 
-//         *(Int64*)dynarray_get(arr, 0, &(Int64){0}) == 1000 &&
-//         *(Int64*)dynarray_get(arr, 1, &(Int64){0}) == 2 &&
+    DynArray* arr = dynarray_create(BYTE, (Int64)sizeof(Byte), 8);
+    Byte b1 = 'a', b2 = 'b';
+    err = dynarray_push(arr, &b1, (Int64)sizeof(Byte)); if (!err.ok) return err;
+    err = dynarray_push(arr, &b2, (Int64)sizeof(Byte)); if (!err.ok) return err;
 
-//         // Out of bounds check
-//         dynarray_set(arr, 5, &(Int64){0}) == false &&
-//         dynarray_set(arr, 100, &(Int64){0}) == false
-//     ) {
-//         res.passed = true;
-//     } else {
-//         res.passed = false;
-//     }
+    Byte out1, out2;
+    err = dynarray_get(arr, 0, &out1); if (!err.ok) return err;
+    err = dynarray_get(arr, 1, &out2); if (!err.ok) return err;
 
-//     return res;
-// }
+    if (out1 != 'a' || out2 != 'b') return snitch ("Wrong byte values", __LINE__, __FILE__);
+
+    Byte new_b1 = 'c';
+    err = dynarray_set(arr, 0, &new_b1, (Int64)sizeof(Byte)); if (!err.ok) return err;
+
+    Byte out3;
+    err = dynarray_get(arr, 0, &out3); if (!err.ok) return err;
+
+    if (out3 != 'c') return snitch ("Wrong byte value after set", __LINE__, __FILE__);
+
+    if (arr->len != 2) return snitch ("Wrong array length after set", __LINE__, __FILE__);
+
+    return (Error){ .ok = true };
+}
+
+Error handle_invalid_input_for_get_set_on_byte_array(FxString *desc) {
+    *desc = fxstring_create("Array: Can handle invalid inputs for get and set on byte array");
+    Error err;
+
+    DynArray* arr = dynarray_create(BYTE, (Int64)sizeof(Byte), 8);
+    Byte b1 = 'a', b2 = 'b';
+    err = dynarray_push(arr, &b1, (Int64)sizeof(Byte)); if (!err.ok) return err;
+    err = dynarray_push(arr, &b2, (Int64)sizeof(Byte)); if (!err.ok) return err;
+
+    // Get a wrong index
+    Byte out1;
+    err = dynarray_get(arr, -10, &out1);
+    if (err.ok) return snitch ("No check for wrong index", __LINE__, __FILE__);
+
+    err = dynarray_get(arr, 100, &out1); 
+    if (err.ok) return snitch ("No check for wrong index", __LINE__, __FILE__);
+
+    // Set a wrong index
+    Byte new_b1 = 'c';
+    err = dynarray_set(arr, -10, &new_b1, (Int64)sizeof(Byte)); 
+    if (err.ok) return snitch ("No check for wrong index", __LINE__, __FILE__);
+
+    err = dynarray_set(arr, 100, &new_b1, (Int64)sizeof(Byte));
+    if (err.ok) return snitch ("No check for wrong index", __LINE__, __FILE__);
+
+    return (Error){ .ok = true };
+}
+
+
 
 // Test_Result can_slice_int_array() {
 //     Test_Result res = { 
