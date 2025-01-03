@@ -5,8 +5,8 @@
 #include "seawitch.h"
 
 // Import the tests
-// #include "dynarray.test.c"
 #include "dynstring.test.c"
+#include "dynarray.test.c"
 
 // Define a type for the test functions
 typedef Error (*Spec)();
@@ -44,6 +44,7 @@ Spec all_specs[] = {
     // -----------------------------------------------
     // Dyn array tests
     // -----------------------------------------------    
+    create_int_array_and_get_values,
 
     // End of tests
     NULL

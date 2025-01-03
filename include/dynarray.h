@@ -31,16 +31,23 @@ typedef struct {
 DynArray* dynarray_create(Types item_type, Int64 item_size, Int64 initial_capacity);
 
 // Push an item to the end of the dynarray
-Bool dynarray_push(DynArray* dynarray, void* item);
+Error dynarray_push(DynArray* dynarray, void* item);
 
 // Pop an item from the end of the dynarray
-Bool dynarray_pop(DynArray* dynarray, void* out);
+Error dynarray_pop(DynArray* dynarray, void* out);
 
 // Get the value at the index
-void* dynarray_get(DynArray* dynarray, Int64 index, void* out);
+Error dynarray_get(DynArray* dynarray, Int64 index, void* out);
 
 // Set the value at the index
-Bool dynarray_set (DynArray* dynarray, Int64 index, void* item);
+Error dynarray_set (DynArray* dynarray, Int64 index, void* item);
+
+// Run a function On Each item. Outcome of the operations are accumulated in the acc
+// Can be used for both mapping and reducing. or for printing.
+// For mapping, the acc is another array
+// For reducing, the acc is any value type
+Error dynarray_oneach(DynArray* dynarray, void* acc, Error (*fn)(Int64, void*, void*));
+
 
 // Slice the dynarray between two indices. Inclusive
 DynArray* dynarray_slice(DynArray* dynarray, Int64 start, Int64 end);
@@ -48,11 +55,6 @@ DynArray* dynarray_slice(DynArray* dynarray, Int64 start, Int64 end);
 // Join multiple dynarrays into a single dynarray
 DynArray *dynarray_join(Int64 n, ...);
 
-// Run a function On Each item. Outcome of the operations are accumulated in the acc
-// Can be used for both mapping and reducing. or for printing.
-// For mapping, the acc is another array
-// For reducing, the acc is any value type
-Bool dynarray_oneach(DynArray* dynarray, void* acc, void (*fn)(Int64, void*, void*));
 
 // Filter function. Iterates over the dynarray and applies the predicate to each element.
 // Returns a new array with only thos elements that satisfy the predicate

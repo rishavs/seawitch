@@ -13,6 +13,7 @@ SET TEST_FILE=spec\runner.c
 
 SET SOURCE_FILES=src\core\errors.c ^
     src\core\dyn_fx_string.c ^
+    src\core\dynarray.c ^
     
     @REM src\core\dynstring.c 
     @REM src\core\dynarray.c
