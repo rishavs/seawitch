@@ -10,14 +10,12 @@
 #define INITIAL_CAPACITY 8
 #endif
 
-// TODO - if all we use is the filesize, can we just not use a macro to create the proper
-// types and struct?
 // TODO - all helper functions should also take in the index of the item
 
 // Create a new dynamic array.
-DynArray* dynarray_create(Types item_type, size_t item_size, size_t initial_capacity) {
+DynArray* dynarray_create(Types item_type, Int64 item_size, Int64 initial_capacity) {
     DynArray *dynarray = calloc(1, sizeof(DynArray));
-    if (dynarray == NULL) return print_error_return_null(__FILE__, __LINE__);
+    if (dynarray == NULL) fatal(snitch("Memory error", __LINE__, __FILE__));
 
     dynarray->item_type = item_type;
     dynarray->item_size = item_size;
@@ -25,25 +23,26 @@ DynArray* dynarray_create(Types item_type, size_t item_size, size_t initial_capa
     dynarray->capacity = initial_capacity ? initial_capacity : INITIAL_CAPACITY;
     
     dynarray->data = calloc(dynarray->capacity, dynarray->item_size);
-    if (dynarray->data == NULL) return print_error_return_null(__FILE__, __LINE__);
+    if (dynarray->data == NULL) fatal(snitch("Memory error", __LINE__, __FILE__));
 
     return dynarray;
 }
 
-Bool dynarray_push(DynArray* dynarray, void* item) {
-    if (!dynarray || !item) return print_error_return_false(__FILE__, __LINE__);
+Error dynarray_push(DynArray* dynarray, void* item) {
+    if (dynarray == NULL || dynarray->data == NULL || item == NULL ) return snitch("Null input", __LINE__, __FILE__);
+    if (dynarray->item_size != sizeof(item)) return snitch("Invalid input", __LINE__, __FILE__);
 
     if (dynarray->len == dynarray->capacity) {
-        size_t new_capacity = dynarray->capacity * 2;
+        Int64 new_capacity = dynarray->capacity * 2;
         if (new_capacity < dynarray->capacity || new_capacity * dynarray->item_size < new_capacity) { // Overflow check
-            return print_error_return_false(__FILE__, __LINE__); // Handle overflow error
+            return snitch("Integer overflow", __LINE__, __FILE__);
         }
         dynarray->capacity = new_capacity;
         dynarray->data = realloc(dynarray->data, dynarray->capacity * dynarray->item_size);
-        if (!dynarray->data) return print_error_return_false(__FILE__, __LINE__);
+        if (!dynarray->data) fatal(snitch("Memory error", __LINE__, __FILE__));
     }
 
-    memcpy((Byte*)dynarray->data + dynarray->len * dynarray->item_size, item, dynarray->item_size);
+    void* res = memcpy((Byte*)dynarray->data + dynarray->len * dynarray->item_size, item, dynarray->item_size);
     if (!item) return print_error_return_false(__FILE__, __LINE__);
 
     dynarray->len++;
@@ -67,7 +66,7 @@ Bool dynarray_pop(DynArray* dynarray, void* out) {
 }
 
 // Get the value at the index
-void* dynarray_get(DynArray* dynarray, size_t index, void* out) {
+void* dynarray_get(DynArray* dynarray, Int64 index, void* out) {
     if (!dynarray || !out) return print_error_return_null(__FILE__, __LINE__);
 
     // check if the index is out of bounds
@@ -80,7 +79,7 @@ void* dynarray_get(DynArray* dynarray, size_t index, void* out) {
 }
 
 // Set the value at the index
-Bool dynarray_set (DynArray* dynarray, size_t index, void* item) {
+Bool dynarray_set (DynArray* dynarray, Int64 index, void* item) {
     if (!dynarray || !item) return print_error_return_false(__FILE__, __LINE__);
 
     // If the index is out of bounds
@@ -93,14 +92,14 @@ Bool dynarray_set (DynArray* dynarray, size_t index, void* item) {
 }
 
 // Slice the dynarray from start to end. Both inclusive
-DynArray* dynarray_slice(DynArray* dynarray, size_t start, size_t end) {
+DynArray* dynarray_slice(DynArray* dynarray, Int64 start, Int64 end) {
     if (!dynarray) return print_error_return_null(__FILE__, __LINE__);
 
     // Bounds checking
     if (start >= dynarray->len || end < start || end >= dynarray->len) return NULL;
 
     // Calculate new length
-    size_t new_len = end - start + 1;
+    Int64 new_len = end - start + 1;
             
     // Create new array
     DynArray* new_dynarray = dynarray_create(dynarray->item_type, dynarray->item_size, new_len * 2);
@@ -119,7 +118,7 @@ DynArray* dynarray_slice(DynArray* dynarray, size_t start, size_t end) {
     return new_dynarray;
 }
 
-DynArray *dynarray_join(size_t n, ...) {
+DynArray *dynarray_join(Int64 n, ...) {
     if (n <= 0) return print_error_return_null(__FILE__, __LINE__);
 
     va_list args;
@@ -132,10 +131,10 @@ DynArray *dynarray_join(size_t n, ...) {
     }
 
     Types item_type = first_dynarray->item_type;
-    size_t item_size = first_dynarray->item_size;
+    Int64 item_size = first_dynarray->item_size;
 
     // Check type and size consistency
-    for (size_t i = 0; i < n ; i++) {
+    for (Int64 i = 0; i < n ; i++) {
         DynArray *dynarray = va_arg(args, DynArray*);
         if (!dynarray || dynarray->item_type != item_type || dynarray->item_size != item_size) {
             va_end(args);
@@ -146,8 +145,8 @@ DynArray *dynarray_join(size_t n, ...) {
 
     // Calculate total length
     va_start(args, n);
-    size_t total_len = 0;
-    for (size_t i = 0; i < n; i++) {
+    Int64 total_len = 0;
+    for (Int64 i = 0; i < n; i++) {
         DynArray *dynarray = va_arg(args, DynArray *);
         if (dynarray) {
             total_len += dynarray->len;
@@ -161,8 +160,8 @@ DynArray *dynarray_join(size_t n, ...) {
 
     // Copy elements
     va_start(args, n);
-    size_t offset = 0;
-    for (size_t i = 0; i < n; i++) {
+    Int64 offset = 0;
+    for (Int64 i = 0; i < n; i++) {
         DynArray *dynarray = va_arg(args, DynArray *);
         if (dynarray) {
             memcpy(
@@ -185,10 +184,10 @@ DynArray *dynarray_join(size_t n, ...) {
 // Can be used for both mapping and reducing. 
 // For mapping, the acc is another array
 // For reducing, the acc is any value type
-Bool dynarray_oneach(DynArray* dynarray, void* acc, void (*fn)(size_t, void*, void*)) {
+Bool dynarray_oneach(DynArray* dynarray, void* acc, void (*fn)(Int64, void*, void*)) {
     if (!dynarray || !fn || !acc) return print_error_return_false(__FILE__, __LINE__);
 
-    for (size_t i = 0; i < dynarray->len; i++) {
+    for (Int64 i = 0; i < dynarray->len; i++) {
         void* item = (Byte*)dynarray->data + i * dynarray->item_size;
         fn(i, acc, item);  // fn should modify result in place
     }
@@ -204,7 +203,7 @@ DynArray* dynarray_filter(DynArray* dynarray, Bool (*predicate)(void*)) {
     DynArray* result = dynarray_create(dynarray->item_type, dynarray->item_size, dynarray->len);
     if (!result) return print_error_return_null(__FILE__, __LINE__);
     
-    for (size_t i = 0; i < dynarray->len; i++) {
+    for (Int64 i = 0; i < dynarray->len; i++) {
         void* item = (Byte*)dynarray->data + i * dynarray->item_size;
         if (predicate(item)) {
             dynarray_push(result, item);
@@ -230,27 +229,36 @@ DynArray* dynarray_sort(DynArray* dynarray, int (*cmp)(const void *, const void 
     return result;
 }
 
-Bool dynarray_compare(DynArray* dynarray1, DynArray* dynarray2, Bool (*cmp)(void*, void*)) {
-    if (!dynarray1 || !dynarray2 || !cmp) return print_error_return_false(__FILE__, __LINE__);
+// Bool dynarray_compare(DynArray* dynarray1, DynArray* dynarray2, Bool (*cmp)(void*, void*)) {
+//     if (!dynarray1 || !dynarray2 || !cmp) return print_error_return_false(__FILE__, __LINE__);
 
-    if (dynarray1->len != dynarray2->len) return false;
+//     if (dynarray1->len != dynarray2->len) return false;
 
-    for (size_t i = 0; i < dynarray1->len; i++) {
-        void* item1 = (Byte*)dynarray1->data + i * dynarray1->item_size;
-        void* item2 = (Byte*)dynarray2->data + i * dynarray2->item_size;
-        if (!cmp(item1, item2)) return false;
-    }
+//     for (Int64 i = 0; i < dynarray1->len; i++) {
+//         void* item1 = (Byte*)dynarray1->data + i * dynarray1->item_size;
+//         void* item2 = (Byte*)dynarray2->data + i * dynarray2->item_size;
+//         if (!cmp(item1, item2)) return false;
+//     }
 
-    return true;
+//     return true;
+// }
+
+// Compare two dynamic arrays
+Bool dynarray_compare(DynArray* arr1, DynArray* arr2) {
+    if (arr1 == NULL || arr2 == NULL) return false;
+    if (arr1->len != arr2->len) return false;
+    if (arr1->item_size != arr2->item_size) return false;
+
+    return memcmp(arr1->data, arr2->data, arr1->len * arr1->item_size) == 0;
 }
 
-Bool dynarray_has_subarray(DynArray* dynarray, size_t pos, DynArray* subarray) {
+Bool dynarray_has_subarray(DynArray* dynarray, Int64 pos, DynArray* subarray) {
     if (!dynarray || !subarray) return print_error_return_false(__FILE__, __LINE__);
 
     if (pos >= dynarray->len) return false;
     if (subarray->len > dynarray->len - pos) return false;
 
-    for (size_t i = 0; i < subarray->len; i++) {
+    for (Int64 i = 0; i < subarray->len; i++) {
         void* item1 = (Byte*)dynarray->data + (pos + i) * dynarray->item_size;
         void* item2 = (Byte*)subarray->data + i * subarray->item_size;
         if (memcmp(item1, item2, dynarray->item_size) != 0) return false;
@@ -261,10 +269,10 @@ Bool dynarray_has_subarray(DynArray* dynarray, size_t pos, DynArray* subarray) {
 
 // Find the index of an item in the dynarray
 // Uses a comparison function to compare items
-Bool dynarray_find(DynArray* dynarray, size_t* out,  void* item, Bool (*cmp)(void*, void*)) {
+Bool dynarray_find(DynArray* dynarray, Int64* out,  void* item, Bool (*cmp)(void*, void*)) {
     if (!dynarray || !out || !item || !cmp) return print_error_return_false(__FILE__, __LINE__);
 
-    for (size_t i = 0; i < dynarray->len; i++) {
+    for (Int64 i = 0; i < dynarray->len; i++) {
         void* current = (Byte*)dynarray->data + i * dynarray->item_size;
         if (cmp(current, item)) {
             *out = i;
@@ -274,3 +282,5 @@ Bool dynarray_find(DynArray* dynarray, size_t* out,  void* item, Bool (*cmp)(voi
 
     return false;
 }
+
+// get overlap with other array - intersects

@@ -92,7 +92,9 @@ Error dynstring_push_chars(DynString* src, char* data) {
     if (temp == NULL) return snitch("Memory error", __LINE__, __FILE__);
     src->data = temp;
 
-    memcpy(src->data + src->len, data, len);
+    void* res = memmove(src->data + src->len, data, len);
+    if (!res) fatal(snitch("Memory error", __LINE__, __FILE__));
+
     src->len += len;
     src->data[src->len] = '\0'; // Explicit null termination
 
@@ -114,7 +116,8 @@ Error dynstring_slice (DynString* src, DynString* result, Int64 start, Int64 end
     result->data = calloc(result->capacity, sizeof(char));
     if (result->data == NULL) return snitch("Memory error", __LINE__, __FILE__);
 
-    memcpy(result->data, src->data + start, result->len);
+    void* res = memmove(result->data, src->data + start, result->len);
+    if (!res) fatal(snitch("Memory error", __LINE__, __FILE__));
 
     result->data[result->len] = '\0';
     
@@ -151,7 +154,9 @@ Error dynstring_join(DynString* result, Int64 n, ...) {
     Int64 offset = 0;
     for (Int64 i = 0; i < n; i++) {
         DynString* str = va_arg(args, DynString*);
-        memcpy(result->data + offset, str->data, str->len);
+        void* res = memmove(result->data + offset, str->data, str->len);
+        if (!res) fatal(snitch("Memory error", __LINE__, __FILE__));
+
         offset += str->len;
     }
     va_end(args);

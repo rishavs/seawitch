@@ -25,6 +25,10 @@ Error must_fail_fun(FxString *desc) {
 Spec all_specs[] = {
     // must_pass_fun,
     // must_fail_fun,
+
+    // -----------------------------------------------
+    // Dyn string tests
+    // -----------------------------------------------
     create_basic_dynstring,
     push_chars_to_string,
     slice_string,
@@ -37,6 +41,9 @@ Spec all_specs[] = {
     compare_empty_strings,
     check_substring_at_given_pos,
     handle_invalid_inputs_for_checking_substring,
+    // -----------------------------------------------
+    // Dyn array tests
+    // -----------------------------------------------    
 
     // End of tests
     NULL
