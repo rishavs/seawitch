@@ -40,6 +40,8 @@ typedef enum {
     // NOTHING,
     // ANY,
     // SOME,
+    OBJECT,
+    REF_OBJECT,
 
 } Types;
 

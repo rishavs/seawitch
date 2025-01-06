@@ -52,6 +52,13 @@ Spec all_specs[] = {
     slice_int_array,
     handle_invalid_input_for_slicing_array,
     join_multiple_arrays,
+    append_an_array_to_another_array,
+    can_filter_an_array,
+    sort_an_array,
+    compare_arrays,
+    find_an_item_in_array,
+    create_object_array,
+    create_object_ref_array,
 
     // End of tests
     NULL

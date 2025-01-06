@@ -137,6 +137,25 @@ Error dynarray_slice(DynArray* dynarray, DynArray* slice, Int64 start, Int64 end
     return (Error){ .ok = true };
 }
 
+Error dynarray_append(DynArray* dest, DynArray* src) {
+    if (dest == NULL || dest->data == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if (src == NULL || src->data == NULL) return snitch("Null input", __LINE__, __FILE__);
+
+    // Check for type and size consistency
+    if (dest->item_type != src->item_type || dest->item_size != src->item_size) return snitch("Invalid input", __LINE__, __FILE__);
+
+    // Update the dest dynarray (allocate memory)
+    dest->len += src->len;
+    dest->capacity = dest->len > 0 ? dest->len * 2: 1; // Double the capacity or 1 if len is 0.
+    dest->data = realloc(dest->data, dest->capacity * dest->item_size);
+    if (!dest->data) return snitch("Memory error", __LINE__, __FILE__);
+
+    // Copy elements
+    void* res = memmove((Byte*)dest->data + (dest->len - src->len) * dest->item_size, src->data, src->len * src->item_size);
+    if (!res) fatal(snitch("Memory error", __LINE__, __FILE__));
+
+    return (Error){.ok = true};
+}
 
 Error dynarray_join(DynArray* joined, Int64 n, ...) {
 
@@ -217,10 +236,11 @@ Error dynarray_join(DynArray* joined, Int64 n, ...) {
 Error dynarray_oneach(DynArray* dynarray, void* acc, Error (*fn)(Int64, Int64, void*, void*)) {
     if (dynarray == NULL || dynarray->data == NULL) return snitch("Null input", __LINE__, __FILE__);
     if (acc == NULL || fn == NULL) return snitch("Invalid input", __LINE__, __FILE__);
-
+    
+    Error err;
     for (Int64 i = 0; i < dynarray->len; i++) {
         void* item = (Byte*)dynarray->data + i * dynarray->item_size;
-        Error err = fn(dynarray->len, i, acc, item);  // fn should modify result in place
+        err = fn(dynarray->len, i, acc, item);  // fn should modify result in place
         if (!err.ok) return err;
     }
 
@@ -230,96 +250,89 @@ Error dynarray_oneach(DynArray* dynarray, void* acc, Error (*fn)(Int64, Int64, v
 // // TODO - also send length of the array
 
 
-// // Filter function. Iterates over the dynarray and applies the predicate to each element.
-// // Returns a new array with only thos elements that satisfy the predicate
-// DynArray* dynarray_filter(DynArray* dynarray, Bool (*predicate)(void*)) {
-//     if (!dynarray || !predicate) return print_error_return_null(__FILE__, __LINE__);
+// Filter function. Iterates over the dynarray and applies the predicate to each element.
+// Returns a new array with only thos elements that satisfy the predicate
+Error dynarray_filter(DynArray* source, DynArray* filtered, Error (*fn)(Int64, Int64, void*, Bool*)) {
+    if (source == NULL || source->data == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if (filtered == NULL || filtered->data == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if (fn == NULL) return snitch("Null input", __LINE__, __FILE__);
+
+    Error err;
+
+    for (Int64 i = 0; i < source->len; i++) {
+        Bool res;
+        void* item = (Byte*)source->data + i * source->item_size;
+        err = fn(source->len, i, item, &res); 
+        if (!err.ok) return err;
+
+        if (res) {
+            err = dynarray_push(filtered, item, source->item_size);
+            if (!err.ok) return err;
+        }
+    }
     
-//     DynArray* result = dynarray_create(dynarray->item_type, dynarray->item_size, dynarray->len);
-//     if (!result) return print_error_return_null(__FILE__, __LINE__);
+    return (Error){ .ok = true };
+}
+
+Error dynarray_sort(DynArray* dynarray, DynArray* sorted, int (*fn)(const void *, const void *)) {
+    if (dynarray == NULL || dynarray->data == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if (sorted == NULL || sorted->data == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if (fn == NULL) return snitch("Null input", __LINE__, __FILE__);
+
+    void* res = memmove(sorted->data, dynarray->data, dynarray->len * dynarray->item_size);
+    if (!res) fatal(snitch("Memory error", __LINE__, __FILE__));
+
+    sorted->len = dynarray->len;
+    qsort(sorted->data, sorted->len, sorted->item_size, fn); // Call qsort directly
+
+    return (Error){ .ok = true };
+}
+
+Error dynarray_compare(DynArray* arr1, DynArray* arr2, Error (*cmp)(void*, void*, Bool*), Bool* result) {
+    if (arr1 == NULL || arr1->data == NULL || arr2 == NULL || arr2->data == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if (arr1->len != arr2->len || arr1->item_size != arr2->item_size) {
+        *result = false;
+        return (Error){ .ok = true };
+    }
     
-//     for (Int64 i = 0; i < dynarray->len; i++) {
-//         void* item = (Byte*)dynarray->data + i * dynarray->item_size;
-//         if (predicate(item)) {
-//             dynarray_push(result, item);
-//         }
-//     }
-    
-//     return result;
-// }
+    Error err;
+    for (Int64 i = 0; i < arr1->len; i++) {
+        Bool res;
+        void* item1 = (Byte*)arr1->data + i * arr1->item_size;
+        void* item2 = (Byte*)arr2->data + i * arr2->item_size;
+        err = cmp(item1, item2, &res); if (!err.ok) return err;
 
-// DynArray* dynarray_sort(DynArray* dynarray, int (*cmp)(const void *, const void *)) { // int (*cmp)
-//     if (!dynarray || !cmp) return print_error_return_null(__FILE__, __LINE__);
+        if (!res) {
+            *result = false;
+            return (Error){ .ok = true };
+        }
+    }
+    *result = true;
+    return (Error){ .ok = true };    
+}
 
-//     DynArray* result = dynarray_create(dynarray->item_type, dynarray->item_size, dynarray->len);
-//     if (!result) return print_error_return_null(__FILE__, __LINE__);
+Error dynarray_find_first(DynArray* dynarray, Int64 from, void* item, Int64* at, Error (*cmp)(void*, void*, Bool*)) {
+    if (dynarray == NULL || dynarray->data == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if (from < 0 || from >= dynarray->len) return snitch("Out of bounds input", __LINE__, __FILE__);
+    if (at == NULL || cmp == NULL) return snitch("Invalid input", __LINE__, __FILE__);
+    if( item == NULL) return snitch("Invalid input", __LINE__, __FILE__);
 
-//     memcpy(result->data, dynarray->data, dynarray->len * dynarray->item_size);
-//     if (!result->data) return print_error_return_null(__FILE__, __LINE__);
+    Error err;
+    *at = -1; // Not found
+    for (Int64 i = from; i < dynarray->len; i++) {
+        Bool res;
+        void* curr_item = (Byte*)dynarray->data + i * dynarray->item_size;
+        err = cmp(curr_item, item, &res); if (!err.ok) return err;
 
-//     result->len = dynarray->len;
-//     qsort(result->data, result->len, result->item_size, cmp); // Call qsort directly
-//     if (!result->data) return print_error_return_null(__FILE__, __LINE__);
-
-//     return result;
-// }
-
-// Bool dynarray_compare(DynArray* dynarray1, DynArray* dynarray2, Bool (*cmp)(void*, void*)) {
-//     if (!dynarray1 || !dynarray2 || !cmp) return print_error_return_false(__FILE__, __LINE__);
-
-//     if (dynarray1->len != dynarray2->len) return false;
-
-//     for (Int64 i = 0; i < dynarray1->len; i++) {
-//         void* item1 = (Byte*)dynarray1->data + i * dynarray1->item_size;
-//         void* item2 = (Byte*)dynarray2->data + i * dynarray2->item_size;
-//         if (!cmp(item1, item2)) return false;
-//     }
-
-//     return true;
-// }
-
-// // Compare two dynamic arrays
-// Bool dynarray_compare(DynArray* arr1, DynArray* arr2) {
-//     if (arr1 == NULL || arr2 == NULL) return false;
-//     if (arr1->len != arr2->len) return false;
-//     if (arr1->item_size != arr2->item_size) return false;
-
-//     return memcmp(arr1->data, arr2->data, arr1->len * arr1->item_size) == 0;
-// }
-
-// Bool dynarray_has_subarray(DynArray* dynarray, Int64 pos, DynArray* subarray) {
-//     if (!dynarray || !subarray) return print_error_return_false(__FILE__, __LINE__);
-
-//     if (pos >= dynarray->len) return false;
-//     if (subarray->len > dynarray->len - pos) return false;
-
-//     for (Int64 i = 0; i < subarray->len; i++) {
-//         void* item1 = (Byte*)dynarray->data + (pos + i) * dynarray->item_size;
-//         void* item2 = (Byte*)subarray->data + i * subarray->item_size;
-//         if (memcmp(item1, item2, dynarray->item_size) != 0) return false;
-//     }
-
-//     return true;
-// }
-
-// // Find the index of an item in the dynarray
-// // Uses a comparison function to compare items
-// Bool dynarray_find(DynArray* dynarray, Int64* out,  void* item, Bool (*cmp)(void*, void*)) {
-//     if (!dynarray || !out || !item || !cmp) return print_error_return_false(__FILE__, __LINE__);
-
-//     for (Int64 i = 0; i < dynarray->len; i++) {
-//         void* current = (Byte*)dynarray->data + i * dynarray->item_size;
-//         if (cmp(current, item)) {
-//             *out = i;
-//             return true;
-//         }
-//     }
-
-//     return false;
-// }
+        if (res) {
+            *at = i;
+            return (Error){ .ok = true};
+        }
+    }
+    return (Error){ .ok = true};
+}
 
 // get overlap with other array - intersects
-
 // Other methods
 // to string
 // pretty print
