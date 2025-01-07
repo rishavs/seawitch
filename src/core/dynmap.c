@@ -11,271 +11,313 @@
 #define DICT_MAX_KEY_LENGTH 256
 
 typedef struct {
-    DynArray* keys; // keys are char[256]
-    DynArray* values;   // values are generic
-    DynArray* available;   // array of bools to track if slot is available. Used for tombstones
+    DynArray keys; // keys are FxStrings
+    DynArray values;   // values are generic
+    DynArray available;   // array of bools to track if slot is available. 
+    // Removing a pair only marks the slot as available. the size of the array remains the same
     
     Types value_type;
-    size_t value_size;
-    size_t len;
-    size_t capacity;
-} DynDict;
+    Int64 value_size;
+    Int64 len;
+    Int64 capacity;
+} DynHashmap;
 
 // FNV-1a hash function
-size_t hash(const char* str) {
-    size_t hval = 0xcbf29ce484222325ULL;
+Int64 hash(const char* str) {
+    Int64 hval = 0xcbf29ce484222325LL;
     unsigned char* s = (unsigned char*)str;
 
     while (*s) {
         hval ^= *s++;
-        hval *= 0x100000001b3ULL;
+        hval *= 0x100000001b3LL;
     }
 
     return hval;
 }
 
 // Create a new dictionary
-DynDict* dyndict_create(Types value_type, size_t value_size, size_t initial_capacity) {
-    DynDict* dict = calloc(1, sizeof(DynDict));
-    if (!dict) return NULL;
+// Note: the dict will only grow, as required, and not shrink.
+DynHashmap* dynhashmap_create(Types value_type, Int64 value_size, Int64 initial_capacity) {
+    DynHashmap* hmap = calloc(1, sizeof(DynHashmap));
+    if (hmap ==  NULL) fatal(snitch("Memory error", __LINE__, __FILE__));
 
-    dict->keys = dynarray_create(REF_BYTE, DICT_MAX_KEY_LENGTH, initial_capacity);
-    if (!dict->keys) return print_error_return_null(__FILE__, __LINE__);
+    hmap->keys = dynarray_create(FXSTRING, FIXED_STRING_SIZE, initial_capacity);
+    hmap->values = dynarray_create(value_type, value_size, initial_capacity);
+    hmap->available = dynarray_create(BOOL, sizeof(Bool), initial_capacity);
 
-    dict->values = dynarray_create(value_type, value_size, initial_capacity);
-    if (!dict->values) return print_error_return_null(__FILE__, __LINE__);
-
-    dict->available = dynarray_create(BOOL, sizeof(Bool), initial_capacity);
-    if (!dict->available) return print_error_return_null(__FILE__, __LINE__);
-
-    dict->value_type = value_type;
-    dict->value_size = value_size;
-    dict->len = 0;
-    dict->capacity = initial_capacity;
+    hmap->value_type = value_type;
+    hmap->value_size = value_size;
+    hmap->len = 0;
+    hmap->capacity = initial_capacity > 0 ? initial_capacity : DICT_INITIAL_CAPACITY;
 
     // Initialize available array to true
-    for (size_t i = 0; i < initial_capacity; i++) {
-        dynarray_push(dict->available, &(Bool){true});
+    for (Int64 i = 0; i < initial_capacity; i++) {
+        err = dynarray_push(hmap->available, &(Bool){true}, sizeof(Bool));
+        if (!err.ok) fatal(err);
     }
 
-    return dict;
+    return hmap;
 }
 
-// Internal function to resize the dictionary. Use the load factor to determine when to resize
-// Returns true if the resize was successful or not needed. False otherwise
-Bool dyndict_resize(DynDict* dict) {
-    if (!dict) return print_error_return_false(__FILE__, __LINE__);
-    if (((double)dict->len / dict->capacity) < DICT_LOAD_FACTOR) return true; //skip. Hash table is not overloaded
+Error dynhashmap_resize(DynHashmap* hashmap) {
+    if(hashmap == NULL || hashmap->keys.data == NULL || hashmap->values == NULL || hashmap->available == NULL) return snitch("Null input", __LINE__, __FILE__);
 
-    size_t old_capacity = dict->capacity;
-    size_t new_capacity = dict->capacity * 2;
-    if (new_capacity < dict->capacity)  return print_error_return_false(__FILE__, __LINE__); // Overflow
+    // Check if the load factor is less than the threshold
+    if ((float)hashmap->len / hashmap->capacity < DICT_LOAD_FACTOR) return (Error){.ok = true};
+    Error err;
 
-    // Resize the arrays and rehash the keys
-    // Instead of realloc, we create new arrays and copy the data over as we have to rehash anyway
-    DynArray* new_keys = dynarray_create(REF_BYTE, DICT_MAX_KEY_LENGTH, new_capacity);
-    DynArray* new_values = dynarray_create(dict->value_type, dict->value_size, new_capacity);
-    DynArray* new_available = dynarray_create(BOOL, sizeof(Bool), new_capacity);
+    Int64 new_capacity = hashmap->capacity * 2;
+    DynHashmap* new_hmap = dynhashmap_create(hashmap->value_type, hashmap->value_size, new_capacity);
 
-    // mark the new slots as available
-    for (size_t i = old_capacity; i < new_capacity; i++) {
-        dynarray_push(new_available, &(Bool){true});
+    Bool avl;
+    // Now iterate over the old hashmap, get the value and insert it into the new hashmap
+    for (Int64 i = 0; i < hashmap->capacity; i++) {
+        err = dynarray_get(&hashmap->available, i, &avl);
+        if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+
+        // Skip if the slot is available
+        if (avl) continue;
+
+        // if the slot is in use, then insert it into the new hashmap
+        FxString key;
+        err = dynarray_get(&hashmap->keys, i, &key);
+        if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+
+        void* value;
+        err = dynarray_get(&hashmap->values, i, &value);
+        if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+        
+        // Insert the key and value into the new hashmap
+        err = dynhashmap_set(new_hmap, key.data, value); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     }
 
-    // rehash and reindex the keys
-    for (size_t i = 0; i < old_capacity; i++) {
-        if (!*(Bool*)dynarray_get(dict->available, i, &(Bool){true})) {
-            char key[DICT_MAX_KEY_LENGTH];
-            dynarray_get(dict->keys, i, key);
-            void* value = calloc(1, dict->value_size);
-            dynarray_get(dict->values, i, value);
+    return (Error){.ok = true};
+}
 
-            size_t hval = hash(key) % new_capacity;
-            size_t original_hval = hval;
-            size_t j = 0;
-            while (!*(Bool*)dynarray_get(new_available, hval, &(Bool){true})) {
-                hval = (original_hval + ++j) % new_capacity;
-            }
 
-            dynarray_set(new_keys, hval, key);
-            dynarray_set(new_values, hval, value);
-            dynarray_set(new_available, hval, &(Bool){false});
+// Set a key-value pair in the DynHashmap
+Error dynhashmap_set(DynHashmap* hashmap, char* key, void* value) {
+    if(hashmap == NULL || hashmap->keys.data == NULL || hashmap->values == NULL || hashmap->available == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if(key.len <= 0 || value == NULL) return snitch("Null input", __LINE__, __FILE__);
+
+    Error err;
+
+    // resize if required
+    err = dynhashmap_resize(hashmap); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+
+    // calculate the index using the hash function
+    Int64 index = hash(key) % hashmap->capacity;
+
+    // loop from the index to the end of the array
+    for (Int64 i = index; i < hashmap->capacity; i++) {
+        Bool is_available;
+        err = dynarray_get(&hashmap->available, i, &is_available);
+        if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+
+        // if the slot is available, insert the key-value pair
+        if (is_available) {
+            // insert the key
+            err = dynarray_set(&hashmap->keys, i, fxstring_create(key), sizeof(FxString));
+            if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+
+            // insert the value
+            err = dynarray_set(&hashmap->values, i, value, hashmap->value_size);
+            if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+
+            // mark the slot as unavailable
+            err = dynarray_set(&hashmap->available, i, &(Bool){false}, sizeof(Bool));
+            if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+
+            hashmap->len++;
+            return (Error){.ok = true};
+        }
+
+        // if the slot is not available, check if the key is the same as the key we are looking for
+        FxString current_key;
+        err = dynarray_get(&hashmap->keys, i, &current_key);
+        if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+
+        // if the key is the same, update the value
+        if (strcmp(current_key.data, key) == 0) {
+            err = dynarray_set(&hashmap->values, i, value, hashmap->value_size);
+            if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+            return (Error){.ok = true};
         }
     }
 
-    dict->keys = new_keys;
-    dict->values = new_values;
-    dict->available = new_available;
-    dict->capacity = new_capacity;
-
-    return true;
+    // if we reach here, it means we have reached the end of the array
+    return snitch("Out of capacity", __LINE__, __FILE__);
 }
 
-// Push a key-value pair to the dictionary
-Bool dyndict_push(DynDict* dict, char* key, void* value) {
-    if (!dict || !key || !value) return print_error_return_false(__FILE__, __LINE__);
-    if (!dyndict_resize(dict)) return false;
 
-    size_t hval = hash(key) % dict->capacity;
-    size_t original_hval = hval;
-    size_t i = 0;
-    while (*(Bool*)dynarray_get(dict->available, hval, &(Bool){0})) {
-        if (i >= dict->capacity) break; // Prevent infinite loop
+Error dynhashmap_has_key(DynHashmap* hmap, const char* key, Bool* result) {
+    if (hmap == NULL || hmap->keys.data == NULL || hmap->values == NULL || hmap->available == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if (key == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if (result == NULL) return snitch("Null input", __LINE__, __FILE__);
 
-        char k[DICT_MAX_KEY_LENGTH];
-        dynarray_get(dict->keys, hval, k);
-        if (strcmp(k, key) == 0) return false; // Key already exists
-        hval = (original_hval + ++i) % dict->capacity;
-    }
+    Error err;
 
-    char key_copy[DICT_MAX_KEY_LENGTH];
-    strncpy(key_copy, key, DICT_MAX_KEY_LENGTH - 1);
-    key_copy[DICT_MAX_KEY_LENGTH - 1] = '\0';
+    // calculate the index using the hash function
+    Int64 index = hash(key) % hmap->capacity;
 
-    if (
-        dynarray_set(dict->keys, hval, key_copy) &&
-        dynarray_set(dict->values, hval, value) &&
-        dynarray_set(dict->available, hval, &(Bool){false})
-    ) {
-        dict->len++;
-        return true;
-    }
+    // loop from the index to the end of the array
+    for (Int64 i = index; i < hmap->capacity; i++) {
+        Bool is_available;
+        err = dynarray_get(&hmap->available, i, &is_available);
+        if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
-    return false;
-}
-
-void* dyndict_get(DynDict* dict, char* key, void* out) {
-    if (!dict || !key || !out) return print_error_return_null(__FILE__, __LINE__);
-
-    size_t hval = hash(key) % dict->capacity;
-    size_t original_hval = hval;
-    size_t i = 0;
-    while (*(Bool*)dynarray_get(dict->available, hval, &(Bool){0}) == false) {
-        if (i >= dict->capacity) break; // Prevent infinite loop
-
-        char k[DICT_MAX_KEY_LENGTH];
-        dynarray_get(dict->keys, hval, k);
-        if (strcmp(k, key) == 0) {
-            return dynarray_get(dict->values, hval, out);
+        // if the slot is available, the key is not in the hashmap
+        if (is_available) {
+            *result = false;
+            return (Error){.ok = true};
         }
-        hval = (original_hval + ++i) % dict->capacity;
-    }
 
-    return NULL;
-}
+        // if the slot is not available, check if the key is the same as the key we are looking for
+        FxString current_key;
+        err = dynarray_get(&hmap->keys, i, &current_key);
+        if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
-Bool dyndict_set(DynDict* dict, char* key, void* value) {
-    if (!dict || !key || !value) return print_error_return_false(__FILE__, __LINE__);
-
-    size_t hval = hash(key) % dict->capacity;
-    size_t original_hval = hval;
-    size_t i = 0;
-    while (*(Bool*)dynarray_get(dict->available, hval, &(Bool){0})) {
-        if (i >= dict->capacity) break; // Prevent infinite loop
-
-        char k[DICT_MAX_KEY_LENGTH];
-        dynarray_get(dict->keys, hval, k);
-        if (strcmp(k, key) == 0) {
-            return dynarray_set(dict->values, hval, value);
-        }
-        hval = (original_hval + ++i) % dict->capacity;
-    }
-
-    return dyndict_push(dict, key, value);
-}
-
-void* dyndict_delete(DynDict* dict, char* key, void* out) {
-    if (!dict || !key || !out) return print_error_return_null(__FILE__, __LINE__);
-
-    size_t hval = hash(key) % dict->capacity;
-    size_t original_hval = hval;
-    size_t i = 0;
-
-    while (*(Bool*)dynarray_get(dict->available, hval, &(Bool){false})) {
-        if (i >= dict->capacity) break; // Prevent infinite loop
-
-        char k[DICT_MAX_KEY_LENGTH];
-        dynarray_get(dict->keys, hval, k);
-
-        if (strcmp(k, key) == 0) {
-            // Mark the slot as available (tombstoned! Mah gahd that value had a family!)
-            Bool tombstone = true;
-            dynarray_set(dict->available, hval, &tombstone);
-            dict->len--; // Decrement the number of items in the hashmap
-
-            //Retrieve the value
-            return dynarray_get(dict->values, hval, out);
-        }
-        hval = (original_hval + ++i) % dict->capacity;
-    }
-
-    return NULL; // Key not found
-}
-
-// check if key exists in the dictionary
-Bool dyndict_contains(DynDict* dict, char* key) {
-    if (!dict || !key) return false;
-    size_t hval = hash(key) % dict->capacity;
-    size_t i = 0;
-    while (!*(Bool*)dynarray_get(dict->available, hval, &(Bool){true})) {
-        if (i >= dict->capacity) break; // Prevent infinite loop
-
-        char k[DICT_MAX_KEY_LENGTH];
-        dynarray_get(dict->keys, hval, k);
-        if (strcmp(k, key) == 0) return true;
-        hval = (hval + ++i) % dict->capacity;
-    }
-    return false;
-}
-
-// Find value in the dictionary. take a predicate function to compare the values
-char* dyndict_find(DynDict* dict, void* out, Bool (*predicate)(void*, void*)) {
-    if (!dict || !predicate) return print_error_return_null(__FILE__, __LINE__);
-
-    for (size_t i = 0; i < dict->capacity; i++) {
-        if (!*(Bool*)dynarray_get(dict->available, i, &(Bool){true})) {
-            char key[DICT_MAX_KEY_LENGTH];
-            dynarray_get(dict->keys, i, key);
-            void* value = dynarray_get(dict->values, i, NULL);
-            if (predicate(value, out)) return key;
+        // if the key is the same, get the value
+        if (strcmp(current_key.data, key) == 0) {
+            *result = true;
+            return (Error){.ok = true};
         }
     }
 
-    return NULL;
+    *result = false;
+    return (Error){.ok = true};
 }
 
-// on each - iterate over each key-value pair with a function
-void dyndict_for_each(DynDict* dict, void (*callback)(size_t, char*, void*)) {
-    for (size_t i = 0; i < dict->capacity; i++) {
-        if (!*(Bool*)dynarray_get(dict->available, i, &(Bool){true})) {
-            char key[DICT_MAX_KEY_LENGTH];
-            dynarray_get(dict->keys, i, key);
-            void* value = dynarray_get(dict->values, i, NULL);
-            callback(i, key, value);
+
+// TODO - use has-Key for the lookup?
+// Get a value from the DynHashmap
+Error dynhashmap_get(DynHashmap* hashmap, const char* key, void* out) {
+    if (hashmap == NULL || hashmap->keys.data == NULL || hashmap->values == NULL || hashmap->available == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if (key == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if (out == NULL) return snitch("Null input", __LINE__, __FILE__);
+
+    Error err;
+
+    // calculate the index using the hash function
+    Int64 index = hash(key) % hashmap->capacity;
+
+    // loop from the index to the end of the array
+    for (Int64 i = index; i < hashmap->capacity; i++) {
+        Bool is_available;
+        err = dynarray_get(&hashmap->available, i, &is_available);
+        if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+
+        // if the slot is available, the key is not in the hashmap
+        if (is_available) return snitch("Key not found", __LINE__, __FILE__);
+
+        // if the slot is not available, check if the key is the same as the key we are looking for
+        FxString current_key;
+        err = dynarray_get(&hashmap->keys, i, &current_key);
+        if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+
+        // if the key is the same, get the value
+        if (strcmp(current_key.data, key) == 0) {
+            err = dynarray_get(&hashmap->values, i, out);
+            if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+            return (Error){.ok = true};
         }
     }
+
+    return snitch("Key not found", __LINE__, __FILE__);
 }
 
-// Filter - filter the dictionary based on a predicate and return a new dictionary
-DynDict* dyndict_filter(DynDict* dict, Bool (*predicate)(void*, void*)) {
-    if (!dict || !predicate) return print_error_return_null(__FILE__, __LINE__);
 
-    DynDict* result = dyndict_create(dict->value_type, dict->value_size, dict->capacity);
-    if (!result) return NULL;
+// Remove a key-value pair from the DynHashmap. use get method internally
+Error dynhashmap_remove(DynHashmap* hashmap, const char* key, void* out) {
+    if (hashmap == NULL || hashmap->keys.data == NULL || hashmap->values == NULL || hashmap->available == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if (key == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if (out == NULL) return snitch("Null input", __LINE__, __FILE__);
 
-    for (size_t i = 0; i < dict->capacity; i++) {
-        if (!*(Bool*)dynarray_get(dict->available, i, &(Bool){true})) {
-            char key[DICT_MAX_KEY_LENGTH];
-            dynarray_get(dict->keys, i, key);
-            void* value = dynarray_get(dict->values, i, NULL);
-            if (predicate(value, NULL)) {
-                dyndict_push(result, key, value);
-            }
+    Error err;
+    
+    err = dynhashmap_get(hashmap, key, out);
+    if(!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+
+    // Set the slot as available
+    Int64 index = hash(key) % hashmap->capacity;
+    err = dynarray_set(&hashmap->available, index, &(Bool){true}, sizeof(Bool));
+    if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+
+    // Decrement the length
+    hashmap->len--;
+
+    return (Error){.ok = true};
+}
+
+// Run a function On Each pair. Mainly to iterate over the dynarrays
+// Outcome of the operations are accumulated in the acc
+// Can be used for both mapping and reducing. 
+// For mapping, the acc is another hashmap
+// For reducing, the acc is any value type
+Error dynhashmap_oneach(DynHashmap* hmap, void* acc, Error (*fn)(Int64, Int64, void*, FxString, void*)) {
+    if (hmap == NULL || hmap->keys.data == NULL || hmap->values == NULL || hmap->available == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if (hmap->keys.data == NULL || hmap->values.data == NULL || hmap->available.data == NULL) return snitch("Null input", __LINE__, __FILE__);
+
+    if (acc == NULL || fn == NULL) return snitch("Invalid input", __LINE__, __FILE__);
+    
+    Error err;
+    for (Int64 i = 0; i < hmap->len; i++) {
+        Bool is_available;
+        err = dynarray_get(&hmap->available, i, &is_available);
+        if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+
+        if (is_available) {
+            void* key = (Byte*)hmap->keys.data + i * hmap->keys.item_size;
+            void* value = (Byte*)hmap->values.data + i * hmap->values.item_size;
+
+            err = fn(hmap->len, i, acc, key, value);  // fn should modify result in place
+            if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
         }
     }
 
-    return result;
+    return (Error){ .ok = true };
 }
 
-// Order - order the dictionary based on the order of entry
-// sort - sort the dictionary based on the keys & values
+Error dynhashmap_list_keys(DynHashmap* hmap, DynArray* keys) {
+    if (hmap == NULL || hmap->keys.data == NULL || hmap->values == NULL || hmap->available == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if (keys == NULL || keys->data == NULL) return snitch("Null input", __LINE__, __FILE__);
+
+    Error err;
+    for (Int64 i = 0; i < hmap->len; i++) {
+        Bool is_available;
+        err = dynarray_get(&hmap->available, i, &is_available);
+        if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+
+        if (is_available) {
+            FxString key;
+            err = dynarray_get(&hmap->keys, i, &key);
+            if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+
+            err = dynarray_push(keys, &key, sizeof(FxString));
+            if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+        }
+    }
+
+    return (Error){ .ok = true };
+}
+
+Error dynhashmap_list_values(DynHashmap* hmap, DynArray* values) {
+    if (hmap == NULL || hmap->keys.data == NULL || hmap->values == NULL || hmap->available == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if (values == NULL || values->data == NULL) return snitch("Null input", __LINE__, __FILE__);
+
+    Error err;
+    for (Int64 i = 0; i < hmap->len; i++) {
+        Bool is_available;
+        err = dynarray_get(&hmap->available, i, &is_available);
+        if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+
+        if (is_available) {
+            void* value = (Byte*)hmap->values.data + i * hmap->values.item_size;
+
+            err = dynarray_push(values, value, hmap->values.item_size);
+            if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+        }
+    }
+
+    return (Error){ .ok = true };
+}

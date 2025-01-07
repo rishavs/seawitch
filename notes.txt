@@ -11,3 +11,9 @@ All types need to_s, print, compare, copy methods
 list of values
 list of refs
 string. string needs to be seprate for optimization & unique methods
+
+
+TODO - add error code inside error?
+-n to -1 = Errors 
+0 = NO ERROR and LOGIC SUCCEEDED
+1 = NO ERROR but LOGIC FAILED 
