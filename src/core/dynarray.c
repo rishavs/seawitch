@@ -96,16 +96,14 @@ Error dynarray_set (DynArray* dynarray, Int64 index, void* item, Int64 item_size
     if (item == NULL) return snitch("Invalid input", __LINE__, __FILE__);
 
     // check if the index is out of bounds
-    if (index < 0 || index >= dynarray->len) return snitch("Out of bounds input", __LINE__, __FILE__);
-
+    if (index < 0) return snitch("Outxx of bounds input", __LINE__, __FILE__);
+    if (index > 0 && index >= dynarray->len) return snitch("Outyy of bounds input", __LINE__, __FILE__);
+    
     // check if the item size is correct
     if (dynarray->item_size != item_size || item_size == 0) return snitch("Invalid input", __LINE__, __FILE__);
 
     // If the dynarray is empty
     if (dynarray->len == 0) return snitch("Out of bounds input", __LINE__, __FILE__);
-    
-    // memcpy((Byte*)dynarray->data + index * dynarray->item_size, item, dynarray->item_size); 
-    // if (!item) return print_error_return_false(__FILE__, __LINE__);
 
     void* res = memmove((Byte*)dynarray->data + index * dynarray->item_size, item, dynarray->item_size);
     if (!res) fatal(snitch("Memory error", __LINE__, __FILE__));

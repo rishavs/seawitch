@@ -4,23 +4,12 @@
 
 #include "errors.h"
 #include "dynarray.h"
+#include "dynhashmap.h"
 #include "seawitch.h"
 
 #define DICT_INITIAL_CAPACITY 8
 #define DICT_LOAD_FACTOR 0.75
 #define DICT_MAX_KEY_LENGTH 256
-
-typedef struct {
-    DynArray keys; // keys are FxStrings
-    DynArray values;   // values are generic
-    DynArray available;   // array of bools to track if slot is available. 
-    // Removing a pair only marks the slot as available. the size of the array remains the same
-    
-    Types value_type;
-    Int64 value_size;
-    Int64 len;
-    Int64 capacity;
-} DynHashmap;
 
 // FNV-1a hash function
 Int64 hash(const char* str) {
@@ -41,26 +30,31 @@ DynHashmap* dynhashmap_create(Types value_type, Int64 value_size, Int64 initial_
     DynHashmap* hmap = calloc(1, sizeof(DynHashmap));
     if (hmap ==  NULL) fatal(snitch("Memory error", __LINE__, __FILE__));
 
-    hmap->keys = dynarray_create(FXSTRING, FIXED_STRING_SIZE, initial_capacity);
-    hmap->values = dynarray_create(value_type, value_size, initial_capacity);
-    hmap->available = dynarray_create(BOOL, sizeof(Bool), initial_capacity);
+    Int64 optimal_capacity = initial_capacity > 0 ? initial_capacity * 2 : DICT_INITIAL_CAPACITY; 
+
+    Error err;
+
+    hmap->keys      = *dynarray_create(FXSTRING, FIXED_STRING_SIZE, optimal_capacity);
+    hmap->values    = *dynarray_create(value_type, value_size, optimal_capacity);
+    hmap->available = *dynarray_create(BOOL, sizeof(Bool), optimal_capacity);
 
     hmap->value_type = value_type;
     hmap->value_size = value_size;
     hmap->len = 0;
-    hmap->capacity = initial_capacity > 0 ? initial_capacity : DICT_INITIAL_CAPACITY;
+    hmap->capacity = optimal_capacity;
 
     // Initialize available array to true
-    for (Int64 i = 0; i < initial_capacity; i++) {
-        err = dynarray_push(hmap->available, &(Bool){true}, sizeof(Bool));
-        if (!err.ok) fatal(err);
+    for (Int64 i = 0; i < optimal_capacity; i++) {
+        Bool available = true;
+        err = dynarray_push(&hmap->available, &available, sizeof(Bool));
+        if (!err.ok) fatal(snitch(err.message.data, __LINE__, __FILE__));
     }
 
     return hmap;
 }
 
 Error dynhashmap_resize(DynHashmap* hashmap) {
-    if(hashmap == NULL || hashmap->keys.data == NULL || hashmap->values == NULL || hashmap->available == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if(hashmap == NULL || hashmap->keys.data == NULL || hashmap->values.data == NULL || hashmap->available.data == NULL) return snitch("Null input", __LINE__, __FILE__);
 
     // Check if the load factor is less than the threshold
     if ((float)hashmap->len / hashmap->capacity < DICT_LOAD_FACTOR) return (Error){.ok = true};
@@ -97,8 +91,8 @@ Error dynhashmap_resize(DynHashmap* hashmap) {
 
 // Set a key-value pair in the DynHashmap
 Error dynhashmap_set(DynHashmap* hashmap, char* key, void* value) {
-    if(hashmap == NULL || hashmap->keys.data == NULL || hashmap->values == NULL || hashmap->available == NULL) return snitch("Null input", __LINE__, __FILE__);
-    if(key.len <= 0 || value == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if(hashmap == NULL || hashmap->keys.data == NULL || hashmap->values.data == NULL || hashmap->available.data == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if(key == NULL || value == NULL) return snitch("Null input", __LINE__, __FILE__);
 
     Error err;
 
@@ -117,7 +111,7 @@ Error dynhashmap_set(DynHashmap* hashmap, char* key, void* value) {
         // if the slot is available, insert the key-value pair
         if (is_available) {
             // insert the key
-            err = dynarray_set(&hashmap->keys, i, fxstring_create(key), sizeof(FxString));
+            err = dynarray_set(&hashmap->keys, i, key, sizeof(FxString));
             if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
             // insert the value
@@ -151,7 +145,7 @@ Error dynhashmap_set(DynHashmap* hashmap, char* key, void* value) {
 
 
 Error dynhashmap_has_key(DynHashmap* hmap, const char* key, Bool* result) {
-    if (hmap == NULL || hmap->keys.data == NULL || hmap->values == NULL || hmap->available == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if (hmap == NULL || hmap->keys.data == NULL || hmap->values.data == NULL || hmap->available.data == NULL) return snitch("Null input", __LINE__, __FILE__);
     if (key == NULL) return snitch("Null input", __LINE__, __FILE__);
     if (result == NULL) return snitch("Null input", __LINE__, __FILE__);
 
@@ -192,7 +186,7 @@ Error dynhashmap_has_key(DynHashmap* hmap, const char* key, Bool* result) {
 // TODO - use has-Key for the lookup?
 // Get a value from the DynHashmap
 Error dynhashmap_get(DynHashmap* hashmap, const char* key, void* out) {
-    if (hashmap == NULL || hashmap->keys.data == NULL || hashmap->values == NULL || hashmap->available == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if (hashmap == NULL || hashmap->keys.data == NULL || hashmap->values.data == NULL || hashmap->available.data == NULL) return snitch("Null input", __LINE__, __FILE__);
     if (key == NULL) return snitch("Null input", __LINE__, __FILE__);
     if (out == NULL) return snitch("Null input", __LINE__, __FILE__);
 
@@ -229,7 +223,7 @@ Error dynhashmap_get(DynHashmap* hashmap, const char* key, void* out) {
 
 // Remove a key-value pair from the DynHashmap. use get method internally
 Error dynhashmap_remove(DynHashmap* hashmap, const char* key, void* out) {
-    if (hashmap == NULL || hashmap->keys.data == NULL || hashmap->values == NULL || hashmap->available == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if (hashmap == NULL || hashmap->keys.data == NULL || hashmap->values.data == NULL || hashmap->available.data == NULL) return snitch("Null input", __LINE__, __FILE__);
     if (key == NULL) return snitch("Null input", __LINE__, __FILE__);
     if (out == NULL) return snitch("Null input", __LINE__, __FILE__);
 
@@ -255,7 +249,7 @@ Error dynhashmap_remove(DynHashmap* hashmap, const char* key, void* out) {
 // For mapping, the acc is another hashmap
 // For reducing, the acc is any value type
 Error dynhashmap_oneach(DynHashmap* hmap, void* acc, Error (*fn)(Int64, Int64, void*, FxString, void*)) {
-    if (hmap == NULL || hmap->keys.data == NULL || hmap->values == NULL || hmap->available == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if (hmap == NULL || hmap->keys.data == NULL || hmap->values.data == NULL || hmap->available.data == NULL) return snitch("Null input", __LINE__, __FILE__);
     if (hmap->keys.data == NULL || hmap->values.data == NULL || hmap->available.data == NULL) return snitch("Null input", __LINE__, __FILE__);
 
     if (acc == NULL || fn == NULL) return snitch("Invalid input", __LINE__, __FILE__);
@@ -266,11 +260,16 @@ Error dynhashmap_oneach(DynHashmap* hmap, void* acc, Error (*fn)(Int64, Int64, v
         err = dynarray_get(&hmap->available, i, &is_available);
         if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
-        if (is_available) {
-            void* key = (Byte*)hmap->keys.data + i * hmap->keys.item_size;
-            void* value = (Byte*)hmap->values.data + i * hmap->values.item_size;
+        if (!is_available) {
+            FxString key;
+            err = dynarray_get(&hmap->keys, i, &key);
+            if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
-            err = fn(hmap->len, i, acc, key, value);  // fn should modify result in place
+            void* value;
+            err = dynarray_get(&hmap->values, i, &value);
+            if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+
+            err = fn(hmap->len, i, acc, key, value);
             if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
         }
     }
@@ -279,7 +278,7 @@ Error dynhashmap_oneach(DynHashmap* hmap, void* acc, Error (*fn)(Int64, Int64, v
 }
 
 Error dynhashmap_list_keys(DynHashmap* hmap, DynArray* keys) {
-    if (hmap == NULL || hmap->keys.data == NULL || hmap->values == NULL || hmap->available == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if (hmap == NULL || hmap->keys.data == NULL || hmap->values.data == NULL || hmap->available.data == NULL) return snitch("Null input", __LINE__, __FILE__);
     if (keys == NULL || keys->data == NULL) return snitch("Null input", __LINE__, __FILE__);
 
     Error err;
@@ -302,8 +301,8 @@ Error dynhashmap_list_keys(DynHashmap* hmap, DynArray* keys) {
 }
 
 Error dynhashmap_list_values(DynHashmap* hmap, DynArray* values) {
-    if (hmap == NULL || hmap->keys.data == NULL || hmap->values == NULL || hmap->available == NULL) return snitch("Null input", __LINE__, __FILE__);
-    if (values == NULL || values->data == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if (hmap == NULL || hmap->keys.data == NULL || hmap->values.data == NULL || hmap->available.data == NULL) return snitch("Null input", __LINE__, __FILE__);
+    if (values->data == NULL || values->data == NULL) return snitch("Null input", __LINE__, __FILE__);
 
     Error err;
     for (Int64 i = 0; i < hmap->len; i++) {

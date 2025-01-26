@@ -4,10 +4,6 @@
 // #include "testing.h"
 #include "seawitch.h"
 
-// Import the tests
-#include "dynstring.test.c"
-#include "dynarray.test.c"
-
 // Define a type for the test functions
 typedef Error (*Spec)();
 
@@ -21,7 +17,20 @@ Error must_fail_fun(FxString *desc) {
     return snitch("This is a dummy error message", __LINE__, __FILE__);
 }
 
+// Helper types
+typedef struct
+{
+    Int64 x;
+    Int64 y;
+} Point;
+
+
 // create a list of test functions like must_pass_fun, must_fail_fun, etc.
+// Import the tests
+#include "dynstring.test.c"
+#include "dynarray.test.c"
+#include "dynhashmap.test.c"
+
 Spec all_specs[] = {
     // must_pass_fun,
     // must_fail_fun,
@@ -59,6 +68,7 @@ Spec all_specs[] = {
     find_an_item_in_array,
     create_object_array,
     create_object_ref_array,
+    create_int_hashmap_and_get_values,
 
     // End of tests
     NULL

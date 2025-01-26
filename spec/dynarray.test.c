@@ -17,13 +17,6 @@ Error print_int(Int64 len, Int64 i, void* acc, void* item) {
     return (Error){ .ok = true };
 }
 
-typedef struct
-{
-    Int64 x;
-    Int64 y;
-} Point;
-
-
 // Null input
 Error create_int_array_and_get_values(FxString *desc) {
     *desc = fxstring_create("Array: Can create an int array and get its items");
