@@ -8,18 +8,34 @@
 
 #include "seawitch.h"
 
-// helper function - print int
-static Error dynhashmap_print_int(Int64 len, Int64 i, void* acc, FxString key, void* item) {
-    if (i == 0) printf("[ ");
-    printf("%s = %lli", key.data, *(Int64*)item);
-    if (i != len - 1) printf(", ");
-    if (i == len - 1) printf(" ]");
+
+static Error dynhashmap_of_int_to_string(Int64 len, Int64 i, void* acc, FxString key, void* item) {
+    DynString* str = (DynString*)acc;
+    if (i == 0) dynstring_push_chars(str, "{ \n");
+    dynstring_push_chars(str, "\t");
+    dynstring_push_chars(str, key.data);
+    dynstring_push_chars(str, " = ");
+    char* val = calloc(1, 20);
+    sprintf(val, "%lli", *(Int64*)item);
+    dynstring_push_chars(str, val);
+    if (i != len - 1) dynstring_push_chars(str, ", \n");
+    if (i == len - 1) dynstring_push_chars(str, " \n}");
 
     return (Error){ .ok = true };
 }
 
+// helper function - print int
+// static Error dynhashmap_print_int(Int64 len, Int64 i, void* acc, FxString key, void* item) {
+//     if (i == 0) printf("[ ");
+//     printf("%s = %lli", key.data, *(Int64*)item);
+//     if (i != len - 1) printf(", ");
+//     if (i == len - 1) printf(" ]");
+
+//     return (Error){ .ok = true };
+// }
+
 Error create_int_hashmap_and_get_values(FxString *desc) {
-    *desc = fxstring_create("Array: Can create an int hashmap and get its values");
+    *desc = fxstring_create("Hashmap: Can create an int hashmap and get its values");
     Error err;
 
     DynHashmap* hmap = dynhashmap_create(INT64, sizeof(Int64), 8);
@@ -41,8 +57,15 @@ Error create_int_hashmap_and_get_values(FxString *desc) {
         return snitch("Hashmap values are incorrect", __LINE__, __FILE__);
     }
 
-    err = dynhashmap_oneach(hmap, &(Int64){0}, dynhashmap_print_int);
+    DynString* str = dynstring_create("Hashmap: {");
+    err = dynhashmap_oneach(hmap, str, dynhashmap_of_int_to_string);
     if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+
+    printf("%s\n", str->data);
+
+
+    // err = dynhashmap_oneach(hmap, &(Int64){0}, dynhashmap_print_int);
+    // if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
     return (Error){ .ok = true };
     

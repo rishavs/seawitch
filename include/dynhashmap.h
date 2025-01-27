@@ -26,15 +26,16 @@
 #define DICT_MAX_KEY_LENGTH 256
 
 typedef struct {
-    DynArray keys; // keys are FxStrings
-    DynArray values;   // values are generic
-    DynArray available;   // array of bools to track if slot is available. 
-    // Removing a pair only marks the slot as available. the size of the array remains the same
-    
-    Types value_type;
-    Int64 value_size;
-    Int64 len;
-    Int64 capacity;
+    FxString* keys;
+    Byte*   data; //data is stored as bytes
+    Bool*   available;
+    Int64*  pdistance; // New: Probe distance array
+    Int64*  hvalue; // New: Hash values array
+
+    Types   item_type;
+    Int64   item_size;
+    Int64   len;
+    Int64   capacity;
 } DynHashmap;
 
 // Create a new dictionary
@@ -60,8 +61,8 @@ Error dynhashmap_remove(DynHashmap* hashmap, const char* key, void* out);
 // For reducing, the acc is any value type
 Error dynhashmap_oneach(DynHashmap* hmap, void* acc, Error (*fn)(Int64, Int64, void*, FxString, void*));
 
-Error dynhashmap_list_keys(DynHashmap* hmap, DynArray* keys);
+// Error dynhashmap_list_keys(DynHashmap* hmap, DynArray* keys);
 
-Error dynhashmap_list_values(DynHashmap* hmap, DynArray* values);
+// Error dynhashmap_list_values(DynHashmap* hmap, DynArray* values);
 
 #endif // SEAWITCH_DYNHASHMAPS_H
