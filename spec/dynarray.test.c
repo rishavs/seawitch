@@ -323,6 +323,11 @@ Error append_an_array_to_another_array(FxString *desc) {
     return (Error){ .ok = true };
 }
 
+Error is_even(Int64 len, Int64 i, void* item, Bool* res) {
+    *res = (*(Int64*)item % 2 == 0);
+    return (Error){ .ok = true };
+}
+
 Error can_filter_an_array(FxString *desc) {
     *desc = fxstring_create("Array: Can filter an int array");
     Error err;
@@ -335,10 +340,6 @@ Error can_filter_an_array(FxString *desc) {
     err = dynarray_push(arr, &(Int64){5}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
     // Error dynarray_filter(DynArray* source, DynArray* filtered, Error (*fn)(Int64, Int64, void*, Bool*));
-    Error is_even(Int64 len, Int64 i, void* item, Bool* res) {
-        *res = (*(Int64*)item % 2 == 0);
-        return (Error){ .ok = true };
-    }
 
     DynArray* filtered = dynarray_create(INT64, sizeof(Int64), 8);
 
@@ -355,6 +356,11 @@ Error can_filter_an_array(FxString *desc) {
     return (Error){ .ok = true };
 }
 
+
+int cmp(const void* a, const void* b) {
+    return *(Int64*)a - *(Int64*)b;
+}
+
 Error sort_an_array(FxString *desc) {
     *desc = fxstring_create("Array: Can sort an int array");
     Error err;
@@ -363,10 +369,6 @@ Error sort_an_array(FxString *desc) {
     err = dynarray_push(arr, &(Int64){5}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     err = dynarray_push(arr, &(Int64){1}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     err = dynarray_push(arr, &(Int64){3}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
-
-    int cmp(const void* a, const void* b) {
-        return *(Int64*)a - *(Int64*)b;
-    }
 
     DynArray* sorted = dynarray_create(INT64, sizeof(Int64), 8);
     err = dynarray_sort(arr, sorted, cmp); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
@@ -383,6 +385,11 @@ Error sort_an_array(FxString *desc) {
     return (Error){ .ok = true };
 }
 
+Error is_eql(void* item1, void* item2, Bool* res) {
+    *res = (*(Int64*)item1 == *(Int64*)item2);
+    return (Error){ .ok = true };
+}
+
 Error compare_arrays(FxString *desc) {
     *desc = fxstring_create("Array: Can compare arrays");
     Error err;
@@ -396,12 +403,7 @@ Error compare_arrays(FxString *desc) {
     err = dynarray_push(arr2, &(Int64){2}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
     Bool result;
-    Error cmp(void* item1, void* item2, Bool* res) {
-        *res = (*(Int64*)item1 == *(Int64*)item2);
-        return (Error){ .ok = true };
-    }
-
-    err = dynarray_compare(arr1, arr2, cmp, &result); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_compare(arr1, arr2, is_eql, &result); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     if (!result) return snitch("Array comparison failed", __LINE__, __FILE__);
 
     // check for different arrays
@@ -410,7 +412,7 @@ Error compare_arrays(FxString *desc) {
     err = dynarray_push(arr3, &(Int64){3}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
     Bool result2;
-    err = dynarray_compare(arr1, arr3, cmp, &result2); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_compare(arr1, arr3, is_eql, &result2); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     if (result2) return snitch("Array comparison failed", __LINE__, __FILE__);
 
     // check for different lengths
@@ -418,7 +420,7 @@ Error compare_arrays(FxString *desc) {
     err = dynarray_push(arr4, &(Int64){1}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
     Bool result3;
-    err = dynarray_compare(arr1, arr4, cmp, &result3); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_compare(arr1, arr4, is_eql, &result3); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     if (result3) return snitch("Array comparison failed", __LINE__, __FILE__);
 
     // check for different types
@@ -426,7 +428,7 @@ Error compare_arrays(FxString *desc) {
     err = dynarray_push(arr5, &(Point){1, 2}, sizeof(Point)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
     Bool result4;
-    err = dynarray_compare(arr1, arr5, cmp, &result4); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_compare(arr1, arr5, is_eql, &result4); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     if (result4) return snitch("Array comparison failed", __LINE__, __FILE__);
 
     return (Error){ .ok = true };
@@ -443,25 +445,21 @@ Error find_an_item_in_array(FxString *desc) {
 
     Int64 index;
     Int64 item_to_find = 2;
-    Error cmp(void* item1, void* item2, Bool* res) {
-        *res = (*(Int64*)item1 == *(Int64*)item2);
-        return (Error){ .ok = true };
-    }
 
-    err = dynarray_find_first(arr, 0, &item_to_find, &index, cmp); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_find_first(arr, 0, &item_to_find, &index, is_eql); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     if (index != 1) return snitch("Array find failed", __LINE__, __FILE__);
 
     // find at exact index
-    err = dynarray_find_first(arr, 1, &item_to_find, &index, cmp); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_find_first(arr, 1, &item_to_find, &index, is_eql); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     if (index != 1) return snitch("Array find failed", __LINE__, __FILE__);
 
     // check for not found
     Int64 not_found_item = 4;
-    err = dynarray_find_first(arr, 0, &not_found_item, &index, cmp); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_find_first(arr, 0, &not_found_item, &index, is_eql); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     if (index != -1) return snitch("Array find failed", __LINE__, __FILE__);
 
     // check not found at index
-    err = dynarray_find_first(arr, 2, &item_to_find, &index, cmp); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_find_first(arr, 2, &item_to_find, &index, is_eql); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     if (index != -1) return snitch("Array find failed", __LINE__, __FILE__);
 
     return (Error){ .ok = true };

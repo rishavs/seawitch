@@ -68,7 +68,10 @@ Spec all_specs[] = {
     find_an_item_in_array,
     create_object_array,
     create_object_ref_array,
+
     create_int_hashmap_and_get_values,
+    handle_invalid_input_for_get_set_on_byte_hashmap,
+    get_set_remove_from_object_hashmap,
 
     // End of tests
     NULL

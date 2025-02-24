@@ -4,7 +4,7 @@ REM REM Clear the screen
 cls
 
 REM Define variables for source files, compiler, headers folder, and flags
-SET COMPILER=gcc
+SET COMPILER=clang
 SET HEADERS_FOLDER=include
 SET OUTPUT_EXECUTABLE=bin\seawitch
 SET TEST_EXECUTABLE=bin\test

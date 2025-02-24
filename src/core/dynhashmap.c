@@ -83,7 +83,8 @@ DynHashmap* dynhashmap_create(Types value_type, Int64 value_size, Int64 initial_
     hmap->keys      = calloc(optimal_capacity, sizeof(FxString));
     hmap->data      = calloc(optimal_capacity, value_size);
     hmap->available = calloc(optimal_capacity, sizeof(Bool));
-    if (hmap->keys == NULL || hmap->data == NULL || hmap->available == NULL) fatal(snitch("Memory error", __LINE__, __FILE__));
+    hmap->insert_order = calloc(optimal_capacity, sizeof(Int64));
+    if (hmap->keys == NULL || hmap->data == NULL || hmap->available == NULL || hmap->insert_order == NULL) fatal(snitch("Memory error", __LINE__, __FILE__));
 
     hmap->item_type = value_type;
     hmap->item_size = value_size;
@@ -125,6 +126,10 @@ Error dynhashmap_set(DynHashmap* hmap, char* key, void* value) {
 
     hmap->available[index] = false;
     hmap->len++;
+
+    // update the insert order
+    hmap->insert_order[index] = hmap->len;
+
     return (Error){.ok = true};
 }
 
@@ -139,8 +144,7 @@ Error dynhashmap_resize(DynHashmap* hmap) {
                                            hmap->item_size, 
                                            new_capacity);
     
-    for (Int64 i = 0, transferred = 0; i < hmap->capacity && 
-         transferred < hmap->len; i++) {
+    for (Int64 i = 0, transferred = 0; i < hmap->capacity && transferred < hmap->len; i++) {
         if (!hmap->available[i]) {
             Error err = dynhashmap_set(new_hmap, hmap->keys[i].data, 
                                      (Byte*)hmap->data + i * hmap->item_size);
@@ -150,11 +154,12 @@ Error dynhashmap_resize(DynHashmap* hmap) {
     }
     
     // Transfer ownership
-    hmap->keys = new_hmap->keys;
-    hmap->data = new_hmap->data;
-    hmap->available = new_hmap->available;
-    hmap->capacity = new_hmap->capacity;
-    hmap->len = new_hmap->len;
+    hmap->keys          = new_hmap->keys;
+    hmap->data          = new_hmap->data;
+    hmap->available     = new_hmap->available;
+    hmap->capacity      = new_hmap->capacity;
+    hmap->len           = new_hmap->len;
+    hmap->insert_order  = new_hmap->insert_order;
 
     return (Error){.ok = true};
 }
@@ -251,6 +256,56 @@ Error dynhashmap_list_keys(DynHashmap* hmap, DynArray* keys) {
     }
 
     return (Error){ .ok = true };
+}
+
+
+
+// Comparison function for qsort to sort by insertion order
+static int compare_insert_order(const void* a, const void* b) {
+    Int64 index_a = *(Int64*)a;
+    Int64 index_b = *(Int64*)b;
+    return index_a - index_b; // Ascending order
+}
+
+Error dynhashmap_list_keys_in_order(DynHashmap* hmap, DynArray* keys) {
+    if (hmap == NULL || hmap->keys == NULL || hmap->data == NULL || hmap->available == NULL || hmap->insert_order == NULL) {
+        return snitch("Null input", __LINE__, __FILE__);
+    }
+    if (keys == NULL) {
+        return snitch("Null input", __LINE__, __FILE__);
+    }
+
+    Error err;
+
+    // 1. Create an array of indices of inserted elements
+    Int64* inserted_indices = malloc(sizeof(Int64) * hmap->len);
+    if (inserted_indices == NULL) {
+        return snitch("Memory error", __LINE__, __FILE__);
+    }
+
+    Int64 inserted_count = 0;
+    for (Int64 i = 0; i < hmap->capacity; i++) {
+        if (!hmap->available[i]) {
+            inserted_indices[inserted_count++] = i;
+        }
+    }
+
+    // 2. Sort the indices based on insertion order
+    qsort(inserted_indices, hmap->len, sizeof(Int64), compare_insert_order);
+
+    // 3. Add the keys to the DynArray in the sorted order
+    for (Int64 i = 0; i < hmap->len; i++) {
+        Int64 index = inserted_indices[i];
+        err = dynarray_push(keys, &hmap->keys[index], sizeof(FxString));
+        if (!err.ok) {
+            free(inserted_indices); // Important: Free allocated memory on error
+            return snitch(err.message.data, __LINE__, __FILE__);
+        }
+    }
+
+    free(inserted_indices); // Free the allocated indices array
+
+    return (Error){.ok = true};
 }
 
 Error dynhashmap_list_values(DynHashmap* hmap, DynArray* values) {

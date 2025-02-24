@@ -19,9 +19,9 @@ int main(int argc, char* argv[]) {
     } else if (argc == 3 && strcmp(argv[1], "run") == 0) {
         printf("Compiling project with entrypoint file: %s\n", argv[2]);
         char* filepath = argv[2];
-        int res = compile_file(filepath);
+        // int res = compile_file(filepath);
         
-        return res;
+        return 0;
         
     } else {
         printf("Invalid arguments\n");
@@ -31,3 +31,25 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
+
+// #include "gc.h"
+// #include <assert.h>
+// #include <stdio.h>
+
+// int main(void) {
+//     printf("Starting\n");
+//     int i;
+
+//     GC_INIT();
+//     GC_enable_incremental();  // Enables incremental GC
+//     for (i = 0; i < 10000000; ++i) {
+//         int **p = (int **) GC_MALLOC(sizeof(int *));
+//         int *q = (int *) GC_MALLOC_ATOMIC(sizeof(int));
+//         assert(*p == 0);
+//         *p = (int *) GC_REALLOC(q, 2 * sizeof(int));
+//         if (i % 100000 == 0)
+//             printf("Heap size = %lu bytes\n",
+//                    (unsigned long)GC_get_heap_size());
+//     }
+//     return 0;
+// }

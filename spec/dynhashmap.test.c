@@ -63,26 +63,62 @@ Error create_int_hashmap_and_get_values(FxString *desc) {
 
     printf("%s\n", str->data);
 
-
-    // err = dynhashmap_oneach(hmap, &(Int64){0}, dynhashmap_print_int);
-    // if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
-
     return (Error){ .ok = true };
     
 }
 
-// Error handle_invalid_inputs_for_array_push(FxString *desc) {
-//     *desc = fxstring_create("Array: Can handle invalid inputs for array push");
-//     Error err;
+Error handle_invalid_input_for_get_set_on_byte_hashmap(FxString *desc) {
+    *desc = fxstring_create("Hashmap: Can handle invalid inputs for get and set on byte hashmap");
+    Error err;
 
-//     DynArray* arr = dynarray_create(INT64, sizeof(Int64), 8);
-    
-//     // Push a wrong type
-//     err = dynarray_push(arr, &(Point){1, 2}, 0); 
-//     if (err.ok) return snitch ("No check for Invalid type", __LINE__, __FILE__);
+    DynHashmap* hmap = dynhashmap_create(BYTE, (Int64)sizeof(Byte), 8);
+    Byte b1 = 'a', b2 = 'b';
+    err = dynhashmap_set(hmap, "one", &b1); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynhashmap_set(hmap, "two", &b2); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
-//     return (Error){ .ok = true };
-// }
+    // Get a wrong key
+    Byte out1;
+    err = dynhashmap_get(hmap, "three", &out1);
+    if (err.ok) return snitch ("No check for wrong key", __LINE__, __FILE__);
+
+    // Set a wrong key
+    Byte new_b1 = 'c';
+    err = dynhashmap_set(hmap, "three", &new_b1); 
+    if (err.ok) return snitch ("No check for wrong key", __LINE__, __FILE__);
+
+    return (Error){ .ok = true };
+}
+
+Error get_set_remove_from_object_hashmap(FxString *desc) {
+    *desc = fxstring_create("Hashmap: Can get, set and remove from an object hashmap");
+    Error err;
+
+    DynHashmap* hmap = dynhashmap_create(OBJECT, (Int64)sizeof(Point), 8);
+    Point p1 = {1, 2}, p2 = {3, 4};
+    err = dynhashmap_set(hmap, "one", &p1); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynhashmap_set(hmap, "two", &p2); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+
+    // Check if the hashmap is correct
+    if (hmap->len != 2) return snitch ("Hashmap length is incorrect", __LINE__, __FILE__);
+
+    Point val1, val2;
+    err = dynhashmap_get(hmap, "one", &val1); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynhashmap_get(hmap, "two", &val2); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+
+    if (val1.x != 1 && val1.y != 2 && val2.x != 3 && val2.y != 4) {
+        return snitch("Hashmap values are incorrect", __LINE__, __FILE__);
+    }
+
+    // Remove an item
+    Point val3;
+    err = dynhashmap_remove(hmap, "one", &val3);
+    if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+
+    if (hmap->len != 1) return snitch ("Hashmap length is incorrect after remove", __LINE__, __FILE__);
+    if (val3.x != 1 || val3.y != 2) return snitch ("Removed item is incorrect", __LINE__, __FILE__);
+
+    return (Error){ .ok = true };
+}
 
 // Error push_and_pop_from_array(FxString *desc) {
 //     *desc = fxstring_create("Array: Can push and pop from an int array");

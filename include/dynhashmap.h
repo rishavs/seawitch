@@ -29,8 +29,9 @@ typedef struct {
     FxString* keys;
     Byte*   data; //data is stored as bytes
     Bool*   available;
-    Int64*  pdistance; // New: Probe distance array
-    Int64*  hvalue; // New: Hash values array
+    // Int64*  probe_distance; // New: Probe distance array
+    // Int64*  hash_value; // New: Hash values array
+    Int64*  insert_order; // New: Insertion order array
 
     Types   item_type;
     Int64   item_size;

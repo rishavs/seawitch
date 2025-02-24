@@ -8,7 +8,8 @@
         "compare": "cpp",
         "type_traits": "cpp",
         "seawitch.h": "c",
-        "testing.h": "c"
+        "testing.h": "c",
+        "dynstring.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

@@ -1,10 +1,10 @@
 # Compiler and compiler flags
-CC = tcc
+CC = clang
 CFLAGS = -std=c99 -Wall
 
 # Source files, header files, and output executable
 SRC_DIR 			= src
-TEST_DIR 			= test
+TEST_DIR 			= spec
 INCLUDE_DIR 		= include
 BIN_DIR 			= bin
 PROJECT_EXECUTABLE 	= $(BIN_DIR)/seawitch
