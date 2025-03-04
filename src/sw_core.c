@@ -1,8 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <errno.h>
+#include <string.h>
 
+#include "sw_core.h"
 #include "seawitch.h"
-#include "sw_string.h"
+
+
 
 void* strict_malloc(size_t size, char* in_file, size_t at_line) {
     void* ptr = malloc(size);
@@ -75,9 +80,15 @@ void fatal_read_file_failure(size_t at_line, char* in_file) {
 Compiler_error* snitch(char* msg, char* in_file, size_t at_line) {
     Compiler_error* err = strict_calloc(1, sizeof(Compiler_error), in_file, at_line);
 
-    err->message        = dynstring_from_cstr(msg);
+    size_t msg_len = strlen(msg);
+    err->message = strict_calloc(msg_len + 1, sizeof(char), in_file, at_line);
+    strncpy(err->message, msg, msg_len);
+
+    size_t in_file_len = strlen(in_file);
+    err->raised_in_file = strict_calloc(in_file_len + 1, sizeof(char), in_file, at_line);
+    strncpy(err->raised_in_file, in_file, in_file_len);
+
     err->raised_on_line = at_line;
-    err->raised_in_file = dynstring_from_cstr(in_file);
 
     return err;
 }
@@ -87,22 +98,22 @@ void yell(Compiler_error* err) {
     // printing in format <filename>:<line>:<column>: <message> makes it clickable in IDEs and editors
     fprintf(stderr, "\033[0;31m");
     if (err->name) {
-        fprintf(stderr, "[ %s ]", err->name->data);
+        fprintf(stderr, "[ %s ]", err->name);
     } else {
         fprintf(stderr, "[ ERROR ]");
     }
     if (err->message) {
-        fprintf(stderr, " %s", err->message->data);
+        fprintf(stderr, " %s", err->message);
     } else {
         fprintf(stderr, " Unknown error");
     }
     if (err->details) {
-        fprintf(stderr, "\n%s", err->details->data);
+        fprintf(stderr, "\n%s", err->details);
     } else {
         fprintf(stderr, "\n%s", "Unknown error details");
     }
     if (err->filepath) {
-        fprintf(stderr, "\n%s", err->filepath->data);
+        fprintf(stderr, "\n%s", err->filepath);
     } else {
         fprintf(stderr,"\n%s", "Unknown file");
     }
@@ -117,7 +128,7 @@ void yell(Compiler_error* err) {
         fprintf(stderr, "");
     }
     
-    fprintf(stderr, "\nCompiler error path:: %s:%zu\n", err->raised_in_file->data, err->raised_on_line);
+    fprintf(stderr, "\nCompiler error path:: %s:%zu\n", err->raised_in_file, err->raised_on_line);
     
     
     if (errno != 0) {

@@ -8,9 +8,9 @@
 #include "seawitch.h"
 
 // helper function - print int
-Error print_int(Int64 len, Int64 i, void* acc, void* item) {
+Error print_int(int64_t len, int64_t i, void* acc, void* item) {
     if (i == 0) printf("[ ");
-    printf("%lli", *(Int64*)item);
+    printf("%lli", *(int64_t*)item);
     if (i != len - 1) printf(", ");
     if (i == len - 1) printf(" ]");
 
@@ -22,19 +22,19 @@ Error create_int_array_and_get_values(FxString *desc) {
     *desc = fxstring_create("Array: Can create an int array and get its items");
     Error err;
 
-    DynArray* arr = dynarray_create(INT64, sizeof(Int64), 8);
-    Int64 item_size = (Int64)sizeof(Int64);   //no overflow check required, as the value will be very small
+    DynArray* arr = dynarray_create(INT64, sizeof(int64_t), 8);
+    int64_t item_size = (int64_t)sizeof(int64_t);   //no overflow check required, as the value will be very small
 
-    err = dynarray_push(arr, &(Int64){1}, item_size); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
-    err = dynarray_push(arr, &(Int64){2}, item_size); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
-    err = dynarray_push(arr, &(Int64){3}, item_size); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
-    err = dynarray_push(arr, &(Int64){4}, item_size); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
-    err = dynarray_push(arr, &(Int64){5}, item_size); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_push(arr, &(int64_t){1}, item_size); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_push(arr, &(int64_t){2}, item_size); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_push(arr, &(int64_t){3}, item_size); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_push(arr, &(int64_t){4}, item_size); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_push(arr, &(int64_t){5}, item_size); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
     // Check if the array is correct
     if (arr->len != 5) return snitch ("Array length is incorrect", __LINE__, __FILE__);
 
-    Int64 val1, val2;
+    int64_t val1, val2;
     err = dynarray_get(arr, 0, &val1); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     err = dynarray_get(arr, 4, &val2); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
@@ -42,7 +42,7 @@ Error create_int_array_and_get_values(FxString *desc) {
         return snitch("Array values are incorrect", __LINE__, __FILE__);
     }
 
-    err = dynarray_oneach(arr, &(Int64){0}, print_int);
+    err = dynarray_oneach(arr, &(int64_t){0}, print_int);
     if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     printf("\n");
 
@@ -53,7 +53,7 @@ Error handle_invalid_inputs_for_array_push(FxString *desc) {
     *desc = fxstring_create("Array: Can handle invalid inputs for array push");
     Error err;
 
-    DynArray* arr = dynarray_create(INT64, sizeof(Int64), 8);
+    DynArray* arr = dynarray_create(INT64, sizeof(int64_t), 8);
     
     // Push a wrong type
     err = dynarray_push(arr, &(Point){1, 2}, 0); 
@@ -66,21 +66,21 @@ Error push_and_pop_from_array(FxString *desc) {
     *desc = fxstring_create("Array: Can push and pop from an int array");
     Error err;
 
-    DynArray* arr = dynarray_create(INT64, (Int64)sizeof(Int64), 8);
-    err = dynarray_push(arr, &(Int64){1}, (Int64)sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
-    err = dynarray_push(arr, &(Int64){2}, (Int64)sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    DynArray* arr = dynarray_create(INT64, (int64_t)sizeof(int64_t), 8);
+    err = dynarray_push(arr, &(int64_t){1}, (int64_t)sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_push(arr, &(int64_t){2}, (int64_t)sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     if (arr->len != 2) return snitch ("Wrong array length after Push", __LINE__, __FILE__);
 
-    Int64 out;
+    int64_t out;
     err = dynarray_pop(arr, &out); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     if (out != 2 || arr->len != 1) return snitch ("Pop operation failed", __LINE__, __FILE__);
 
-    err = dynarray_push(arr, &(Int64){3}, (Int64)sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
-    err = dynarray_push(arr, &(Int64){4}, (Int64)sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_push(arr, &(int64_t){3}, (int64_t)sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_push(arr, &(int64_t){4}, (int64_t)sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     if (arr->len != 3) return snitch ("Wrong array length after Push", __LINE__, __FILE__);
 
     // Pop all items
-    Int64 out1, out2, out3;
+    int64_t out1, out2, out3;
     err = dynarray_pop(arr, &out1); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     err = dynarray_pop(arr, &out2); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     err = dynarray_pop(arr, &out3); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
@@ -89,7 +89,7 @@ Error push_and_pop_from_array(FxString *desc) {
     if (out1 != 4 || out2 != 3 || out3 != 1) return snitch ("Pop operation failed", __LINE__, __FILE__);
 
     // pop empty array
-    Int64 out4;
+    int64_t out4;
     err = dynarray_pop(arr, &out4); 
     if (err.ok) return snitch ("No check for Pop from empty array", __LINE__, __FILE__);
 
@@ -100,10 +100,10 @@ Error get_set_on_byte_array(FxString *desc) {
     *desc = fxstring_create("Array: Can get and set a byte array");
     Error err;
 
-    DynArray* arr = dynarray_create(BYTE, (Int64)sizeof(Byte), 8);
+    DynArray* arr = dynarray_create(BYTE, (int64_t)sizeof(Byte), 8);
     Byte b1 = 'a', b2 = 'b';
-    err = dynarray_push(arr, &b1, (Int64)sizeof(Byte)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
-    err = dynarray_push(arr, &b2, (Int64)sizeof(Byte)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_push(arr, &b1, (int64_t)sizeof(Byte)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_push(arr, &b2, (int64_t)sizeof(Byte)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
     Byte out1, out2;
     err = dynarray_get(arr, 0, &out1); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
@@ -112,7 +112,7 @@ Error get_set_on_byte_array(FxString *desc) {
     if (out1 != 'a' || out2 != 'b') return snitch ("Wrong byte values", __LINE__, __FILE__);
 
     Byte new_b1 = 'c';
-    err = dynarray_set(arr, 0, &new_b1, (Int64)sizeof(Byte)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_set(arr, 0, &new_b1, (int64_t)sizeof(Byte)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
     Byte out3;
     err = dynarray_get(arr, 0, &out3); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
@@ -128,10 +128,10 @@ Error handle_invalid_input_for_get_set_on_byte_array(FxString *desc) {
     *desc = fxstring_create("Array: Can handle invalid inputs for get and set on byte array");
     Error err;
 
-    DynArray* arr = dynarray_create(BYTE, (Int64)sizeof(Byte), 8);
+    DynArray* arr = dynarray_create(BYTE, (int64_t)sizeof(Byte), 8);
     Byte b1 = 'a', b2 = 'b';
-    err = dynarray_push(arr, &b1, (Int64)sizeof(Byte)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
-    err = dynarray_push(arr, &b2, (Int64)sizeof(Byte)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_push(arr, &b1, (int64_t)sizeof(Byte)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_push(arr, &b2, (int64_t)sizeof(Byte)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
     // Get a wrong index
     Byte out1;
@@ -143,10 +143,10 @@ Error handle_invalid_input_for_get_set_on_byte_array(FxString *desc) {
 
     // Set a wrong index
     Byte new_b1 = 'c';
-    err = dynarray_set(arr, -10, &new_b1, (Int64)sizeof(Byte)); 
+    err = dynarray_set(arr, -10, &new_b1, (int64_t)sizeof(Byte)); 
     if (err.ok) return snitch ("No check for wrong index", __LINE__, __FILE__);
 
-    err = dynarray_set(arr, 100, &new_b1, (Int64)sizeof(Byte));
+    err = dynarray_set(arr, 100, &new_b1, (int64_t)sizeof(Byte));
     if (err.ok) return snitch ("No check for wrong index", __LINE__, __FILE__);
 
     return (Error){ .ok = true };
@@ -156,16 +156,16 @@ Error slice_int_array(FxString *desc) {
     *desc = fxstring_create("Array: Can slice an int array");
     Error err;
 
-    DynArray* arr = dynarray_create(INT64, sizeof(Int64), 8);
-    err = dynarray_push(arr, &(Int64){1}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__); // 0
-    err = dynarray_push(arr, &(Int64){2}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__); // 1
-    err = dynarray_push(arr, &(Int64){3}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__); // 2
-    err = dynarray_push(arr, &(Int64){4}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__); // 3
-    err = dynarray_push(arr, &(Int64){5}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__); // 4
+    DynArray* arr = dynarray_create(INT64, sizeof(int64_t), 8);
+    err = dynarray_push(arr, &(int64_t){1}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__); // 0
+    err = dynarray_push(arr, &(int64_t){2}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__); // 1
+    err = dynarray_push(arr, &(int64_t){3}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__); // 2
+    err = dynarray_push(arr, &(int64_t){4}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__); // 3
+    err = dynarray_push(arr, &(int64_t){5}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__); // 4
 
-    DynArray* sliced1 = dynarray_create(INT64, sizeof(Int64), 8);
+    DynArray* sliced1 = dynarray_create(INT64, sizeof(int64_t), 8);
     err = dynarray_slice(arr, sliced1, 1, 3); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
-    Int64 val1, val2, val3;
+    int64_t val1, val2, val3;
     err = dynarray_get(sliced1, 0, &val1); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     err = dynarray_get(sliced1, 1, &val2); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     err = dynarray_get(sliced1, 2, &val3); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
@@ -175,9 +175,9 @@ Error slice_int_array(FxString *desc) {
     }
 
     // now slice entire array
-    DynArray* sliced2 = dynarray_create(INT64, sizeof(Int64), 8);
+    DynArray* sliced2 = dynarray_create(INT64, sizeof(int64_t), 8);
     err = dynarray_slice(arr, sliced2, 0, 4); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
-    Int64 val4, val5, val6, val7, val8;
+    int64_t val4, val5, val6, val7, val8;
     err = dynarray_get(sliced2, 0, &val4); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     err = dynarray_get(sliced2, 1, &val5); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     err = dynarray_get(sliced2, 2, &val6); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
@@ -189,9 +189,9 @@ Error slice_int_array(FxString *desc) {
     }
 
     // Can slice only 1 item
-    DynArray* sliced3 = dynarray_create(INT64, sizeof(Int64), 8);
+    DynArray* sliced3 = dynarray_create(INT64, sizeof(int64_t), 8);
     err = dynarray_slice(arr, sliced3, 2, 2); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
-    Int64 val9;
+    int64_t val9;
     err = dynarray_get(sliced3, 0, &val9); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     if (sliced3->len != 1 || val9 != 3) {
         return snitch("Array slicing failed", __LINE__, __FILE__);
@@ -204,34 +204,34 @@ Error handle_invalid_input_for_slicing_array(FxString *desc) {
     *desc = fxstring_create("Array: Can handle invalid inputs for slicing array");
     Error err;
 
-    DynArray* arr = dynarray_create(INT64, sizeof(Int64), 8);
-    err = dynarray_push(arr, &(Int64){1}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
-    err = dynarray_push(arr, &(Int64){2}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
-    err = dynarray_push(arr, &(Int64){3}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
-    err = dynarray_push(arr, &(Int64){4}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
-    err = dynarray_push(arr, &(Int64){5}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    DynArray* arr = dynarray_create(INT64, sizeof(int64_t), 8);
+    err = dynarray_push(arr, &(int64_t){1}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_push(arr, &(int64_t){2}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_push(arr, &(int64_t){3}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_push(arr, &(int64_t){4}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_push(arr, &(int64_t){5}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
     // Slice with wrong start index
-    DynArray* sliced1 = dynarray_create(INT64, sizeof(Int64), 8);
+    DynArray* sliced1 = dynarray_create(INT64, sizeof(int64_t), 8);
     err = dynarray_slice(arr, sliced1, -1, 3);
     if (err.ok) return snitch ("No check for wrong start index", __LINE__, __FILE__);
 
     // Slice with wrong end index
-    DynArray* sliced2 = dynarray_create(INT64, sizeof(Int64), 8);
+    DynArray* sliced2 = dynarray_create(INT64, sizeof(int64_t), 8);
     err = dynarray_slice(arr, sliced2, 1, 100);
     if (err.ok) return snitch ("No check for wrong end index", __LINE__, __FILE__);
 
     // Slice with start index greater than end index
-    DynArray* sliced3 = dynarray_create(INT64, sizeof(Int64), 8);
+    DynArray* sliced3 = dynarray_create(INT64, sizeof(int64_t), 8);
     err = dynarray_slice(arr, sliced3, 3, 1);
     if (err.ok) return snitch ("No check for start index greater than end index", __LINE__, __FILE__);
 
     // Slice with empty slice array
-    DynArray* empty_slice = dynarray_create(INT64, sizeof(Int64), 8);
+    DynArray* empty_slice = dynarray_create(INT64, sizeof(int64_t), 8);
     err = dynarray_slice(arr, empty_slice, 0, 4); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     
     // Check if the original array is not modified
-    Int64 val1;
+    int64_t val1;
     err = dynarray_get(arr, 0, &val1); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     
     if (val1 != 1) return snitch ("Original array is modified after slicing", __LINE__, __FILE__);
@@ -243,21 +243,21 @@ Error join_multiple_arrays(FxString *desc) {
     *desc = fxstring_create("Array: Can join multiple int arrays");
     Error err;
 
-    DynArray* arr1 = dynarray_create(INT64, sizeof(Int64), 8);
-    err = dynarray_push(arr1, &(Int64){1}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
-    err = dynarray_push(arr1, &(Int64){2}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    DynArray* arr1 = dynarray_create(INT64, sizeof(int64_t), 8);
+    err = dynarray_push(arr1, &(int64_t){1}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_push(arr1, &(int64_t){2}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
-    DynArray* arr2 = dynarray_create(INT64, sizeof(Int64), 8);
-    err = dynarray_push(arr2, &(Int64){3}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
-    err = dynarray_push(arr2, &(Int64){4}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    DynArray* arr2 = dynarray_create(INT64, sizeof(int64_t), 8);
+    err = dynarray_push(arr2, &(int64_t){3}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_push(arr2, &(int64_t){4}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
-    DynArray* arr3 = dynarray_create(INT64, sizeof(Int64), 8);
-    err = dynarray_push(arr3, &(Int64){5}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    DynArray* arr3 = dynarray_create(INT64, sizeof(int64_t), 8);
+    err = dynarray_push(arr3, &(int64_t){5}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
-    DynArray* joined = dynarray_create(INT64, sizeof(Int64), 8);
+    DynArray* joined = dynarray_create(INT64, sizeof(int64_t), 8);
     err = dynarray_join(joined, 3, arr1, arr2, arr3); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
-    Int64 val1, val2, val3, val4, val5;
+    int64_t val1, val2, val3, val4, val5;
     err = dynarray_get(joined, 0, &val1); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     err = dynarray_get(joined, 1, &val2); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     err = dynarray_get(joined, 2, &val3); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
@@ -275,12 +275,12 @@ Error join_multiple_arrays(FxString *desc) {
     // Can join empty arrays
 
     // check if n is <= 0
-    DynArray* joined2 = dynarray_create(INT64, sizeof(Int64), 8);
+    DynArray* joined2 = dynarray_create(INT64, sizeof(int64_t), 8);
     err = dynarray_join(joined2, 0, arr1, arr2, arr3);
     if (err.ok) return snitch ("No check for n <= 0", __LINE__, __FILE__);
 
     // check if n > actual number of items
-    DynArray* joined3 = dynarray_create(INT64, sizeof(Int64), 8);
+    DynArray* joined3 = dynarray_create(INT64, sizeof(int64_t), 8);
     err = dynarray_join(joined3, 5, arr1, arr2, arr3);
     if (err.ok) return snitch ("No check for n > actual number of items", __LINE__, __FILE__);
 
@@ -291,17 +291,17 @@ Error append_an_array_to_another_array(FxString *desc) {
     *desc = fxstring_create("Array: Can append an array to another array");
     Error err;
 
-    DynArray* arr1 = dynarray_create(INT64, sizeof(Int64), 8);
-    err = dynarray_push(arr1, &(Int64){1}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
-    err = dynarray_push(arr1, &(Int64){2}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    DynArray* arr1 = dynarray_create(INT64, sizeof(int64_t), 8);
+    err = dynarray_push(arr1, &(int64_t){1}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_push(arr1, &(int64_t){2}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
-    DynArray* arr2 = dynarray_create(INT64, sizeof(Int64), 8);
-    err = dynarray_push(arr2, &(Int64){3}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
-    err = dynarray_push(arr2, &(Int64){4}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    DynArray* arr2 = dynarray_create(INT64, sizeof(int64_t), 8);
+    err = dynarray_push(arr2, &(int64_t){3}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_push(arr2, &(int64_t){4}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
     err = dynarray_append(arr1, arr2); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
-    Int64 val1, val2, val3, val4;
+    int64_t val1, val2, val3, val4;
     err = dynarray_get(arr1, 0, &val1); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     err = dynarray_get(arr1, 1, &val2); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     err = dynarray_get(arr1, 2, &val3); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
@@ -312,7 +312,7 @@ Error append_an_array_to_another_array(FxString *desc) {
     }
 
     // check that the original array is not modified
-    Int64 val5, val6;
+    int64_t val5, val6;
     err = dynarray_get(arr2, 0, &val5); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     err = dynarray_get(arr2, 1, &val6); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
@@ -323,8 +323,8 @@ Error append_an_array_to_another_array(FxString *desc) {
     return (Error){ .ok = true };
 }
 
-Error is_even(Int64 len, Int64 i, void* item, Bool* res) {
-    *res = (*(Int64*)item % 2 == 0);
+Error is_even(int64_t len, int64_t i, void* item, Bool* res) {
+    *res = (*(int64_t*)item % 2 == 0);
     return (Error){ .ok = true };
 }
 
@@ -332,20 +332,20 @@ Error can_filter_an_array(FxString *desc) {
     *desc = fxstring_create("Array: Can filter an int array");
     Error err;
 
-    DynArray* arr = dynarray_create(INT64, sizeof(Int64), 8);
-    err = dynarray_push(arr, &(Int64){1}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
-    err = dynarray_push(arr, &(Int64){2}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
-    err = dynarray_push(arr, &(Int64){3}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
-    err = dynarray_push(arr, &(Int64){4}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
-    err = dynarray_push(arr, &(Int64){5}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    DynArray* arr = dynarray_create(INT64, sizeof(int64_t), 8);
+    err = dynarray_push(arr, &(int64_t){1}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_push(arr, &(int64_t){2}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_push(arr, &(int64_t){3}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_push(arr, &(int64_t){4}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_push(arr, &(int64_t){5}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
-    // Error dynarray_filter(DynArray* source, DynArray* filtered, Error (*fn)(Int64, Int64, void*, Bool*));
+    // Error dynarray_filter(DynArray* source, DynArray* filtered, Error (*fn)(int64_t, int64_t, void*, Bool*));
 
-    DynArray* filtered = dynarray_create(INT64, sizeof(Int64), 8);
+    DynArray* filtered = dynarray_create(INT64, sizeof(int64_t), 8);
 
     err = dynarray_filter(arr, filtered, is_even); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
-    Int64 val1, val2;
+    int64_t val1, val2;
     err = dynarray_get(filtered, 0, &val1); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     err = dynarray_get(filtered, 1, &val2); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
@@ -358,22 +358,22 @@ Error can_filter_an_array(FxString *desc) {
 
 
 int cmp(const void* a, const void* b) {
-    return *(Int64*)a - *(Int64*)b;
+    return *(int64_t*)a - *(int64_t*)b;
 }
 
 Error sort_an_array(FxString *desc) {
     *desc = fxstring_create("Array: Can sort an int array");
     Error err;
 
-    DynArray* arr = dynarray_create(INT64, sizeof(Int64), 8);
-    err = dynarray_push(arr, &(Int64){5}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
-    err = dynarray_push(arr, &(Int64){1}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
-    err = dynarray_push(arr, &(Int64){3}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    DynArray* arr = dynarray_create(INT64, sizeof(int64_t), 8);
+    err = dynarray_push(arr, &(int64_t){5}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_push(arr, &(int64_t){1}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_push(arr, &(int64_t){3}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
-    DynArray* sorted = dynarray_create(INT64, sizeof(Int64), 8);
+    DynArray* sorted = dynarray_create(INT64, sizeof(int64_t), 8);
     err = dynarray_sort(arr, sorted, cmp); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
-    Int64 val1, val2, val3;
+    int64_t val1, val2, val3;
     err = dynarray_get(sorted, 0, &val1); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     err = dynarray_get(sorted, 1, &val2); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     err = dynarray_get(sorted, 2, &val3); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
@@ -386,7 +386,7 @@ Error sort_an_array(FxString *desc) {
 }
 
 Error is_eql(void* item1, void* item2, Bool* res) {
-    *res = (*(Int64*)item1 == *(Int64*)item2);
+    *res = (*(int64_t*)item1 == *(int64_t*)item2);
     return (Error){ .ok = true };
 }
 
@@ -394,30 +394,30 @@ Error compare_arrays(FxString *desc) {
     *desc = fxstring_create("Array: Can compare arrays");
     Error err;
 
-    DynArray* arr1 = dynarray_create(INT64, sizeof(Int64), 8);
-    err = dynarray_push(arr1, &(Int64){1}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
-    err = dynarray_push(arr1, &(Int64){2}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    DynArray* arr1 = dynarray_create(INT64, sizeof(int64_t), 8);
+    err = dynarray_push(arr1, &(int64_t){1}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_push(arr1, &(int64_t){2}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
-    DynArray* arr2 = dynarray_create(INT64, sizeof(Int64), 8);
-    err = dynarray_push(arr2, &(Int64){1}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
-    err = dynarray_push(arr2, &(Int64){2}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    DynArray* arr2 = dynarray_create(INT64, sizeof(int64_t), 8);
+    err = dynarray_push(arr2, &(int64_t){1}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_push(arr2, &(int64_t){2}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
     Bool result;
     err = dynarray_compare(arr1, arr2, is_eql, &result); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     if (!result) return snitch("Array comparison failed", __LINE__, __FILE__);
 
     // check for different arrays
-    DynArray* arr3 = dynarray_create(INT64, sizeof(Int64), 8);
-    err = dynarray_push(arr3, &(Int64){1}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
-    err = dynarray_push(arr3, &(Int64){3}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    DynArray* arr3 = dynarray_create(INT64, sizeof(int64_t), 8);
+    err = dynarray_push(arr3, &(int64_t){1}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_push(arr3, &(int64_t){3}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
     Bool result2;
     err = dynarray_compare(arr1, arr3, is_eql, &result2); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     if (result2) return snitch("Array comparison failed", __LINE__, __FILE__);
 
     // check for different lengths
-    DynArray* arr4 = dynarray_create(INT64, sizeof(Int64), 8);
-    err = dynarray_push(arr4, &(Int64){1}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    DynArray* arr4 = dynarray_create(INT64, sizeof(int64_t), 8);
+    err = dynarray_push(arr4, &(int64_t){1}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
     Bool result3;
     err = dynarray_compare(arr1, arr4, is_eql, &result3); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
@@ -438,13 +438,13 @@ Error find_an_item_in_array(FxString *desc) {
     *desc = fxstring_create("Array: Can find an item in an int array");
     Error err;
 
-    DynArray* arr = dynarray_create(INT64, sizeof(Int64), 8);
-    err = dynarray_push(arr, &(Int64){1}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
-    err = dynarray_push(arr, &(Int64){2}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
-    err = dynarray_push(arr, &(Int64){3}, sizeof(Int64)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    DynArray* arr = dynarray_create(INT64, sizeof(int64_t), 8);
+    err = dynarray_push(arr, &(int64_t){1}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_push(arr, &(int64_t){2}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
+    err = dynarray_push(arr, &(int64_t){3}, sizeof(int64_t)); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
 
-    Int64 index;
-    Int64 item_to_find = 2;
+    int64_t index;
+    int64_t item_to_find = 2;
 
     err = dynarray_find_first(arr, 0, &item_to_find, &index, is_eql); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     if (index != 1) return snitch("Array find failed", __LINE__, __FILE__);
@@ -454,7 +454,7 @@ Error find_an_item_in_array(FxString *desc) {
     if (index != 1) return snitch("Array find failed", __LINE__, __FILE__);
 
     // check for not found
-    Int64 not_found_item = 4;
+    int64_t not_found_item = 4;
     err = dynarray_find_first(arr, 0, &not_found_item, &index, is_eql); if (!err.ok) return snitch(err.message.data, __LINE__, __FILE__);
     if (index != -1) return snitch("Array find failed", __LINE__, __FILE__);
 
@@ -513,19 +513,19 @@ Error create_object_ref_array(FxString *desc) {
 //         .passed = false 
 //     };
 
-//     DynArray* arr = dynarray_create(INT64, sizeof(Int64), 8);
-//     dynarray_push(arr, &(Int64){1});
-//     dynarray_push(arr, &(Int64){2});
-//     dynarray_push(arr, &(Int64){3});
-//     dynarray_push(arr, &(Int64){4});
-//     dynarray_push(arr, &(Int64){5});
+//     DynArray* arr = dynarray_create(INT64, sizeof(int64_t), 8);
+//     dynarray_push(arr, &(int64_t){1});
+//     dynarray_push(arr, &(int64_t){2});
+//     dynarray_push(arr, &(int64_t){3});
+//     dynarray_push(arr, &(int64_t){4});
+//     dynarray_push(arr, &(int64_t){5});
 
 //     DynArray* sliced = dynarray_slice(arr, 1, 3);
 
 //     if (sliced->len == 3 &&
-//         *(Int64*)dynarray_get(sliced, 0, &(Int64){0}) == 2 &&
-//         *(Int64*)dynarray_get(sliced, 1, &(Int64){0}) == 3 &&
-//         *(Int64*)dynarray_get(sliced, 2, &(Int64){0}) == 4
+//         *(int64_t*)dynarray_get(sliced, 0, &(int64_t){0}) == 2 &&
+//         *(int64_t*)dynarray_get(sliced, 1, &(int64_t){0}) == 3 &&
+//         *(int64_t*)dynarray_get(sliced, 2, &(int64_t){0}) == 4
 //     ) {
 //         res.passed = true;
 //     } else {
@@ -541,25 +541,25 @@ Error create_object_ref_array(FxString *desc) {
 //         .passed = false 
 //     };
 
-//     DynArray* arr1 = dynarray_create(INT64, sizeof(Int64), 8);
-//     dynarray_push(arr1, &(Int64){1});
-//     dynarray_push(arr1, &(Int64){2});
+//     DynArray* arr1 = dynarray_create(INT64, sizeof(int64_t), 8);
+//     dynarray_push(arr1, &(int64_t){1});
+//     dynarray_push(arr1, &(int64_t){2});
 
-//     DynArray* arr2 = dynarray_create(INT64, sizeof(Int64), 8);
-//     dynarray_push(arr2, &(Int64){3});
-//     dynarray_push(arr2, &(Int64){4});
+//     DynArray* arr2 = dynarray_create(INT64, sizeof(int64_t), 8);
+//     dynarray_push(arr2, &(int64_t){3});
+//     dynarray_push(arr2, &(int64_t){4});
 
-//     DynArray* arr3 = dynarray_create(INT64, sizeof(Int64), 8);
-//     dynarray_push(arr3, &(Int64){5});
+//     DynArray* arr3 = dynarray_create(INT64, sizeof(int64_t), 8);
+//     dynarray_push(arr3, &(int64_t){5});
     
 //     DynArray* joined = dynarray_join(3, arr1, arr2, arr3);
 
 //     if (joined->len == 5 &&
-//         *(Int64*)dynarray_get(joined, 0, &(Int64){0}) == 1 &&
-//         *(Int64*)dynarray_get(joined, 1, &(Int64){0}) == 2 &&
-//         *(Int64*)dynarray_get(joined, 2, &(Int64){0}) == 3 &&
-//         *(Int64*)dynarray_get(joined, 3, &(Int64){0}) == 4 &&
-//         *(Int64*)dynarray_get(joined, 4, &(Int64){0}) == 5
+//         *(int64_t*)dynarray_get(joined, 0, &(int64_t){0}) == 1 &&
+//         *(int64_t*)dynarray_get(joined, 1, &(int64_t){0}) == 2 &&
+//         *(int64_t*)dynarray_get(joined, 2, &(int64_t){0}) == 3 &&
+//         *(int64_t*)dynarray_get(joined, 3, &(int64_t){0}) == 4 &&
+//         *(int64_t*)dynarray_get(joined, 4, &(int64_t){0}) == 5
 //     ) {
 //         res.passed = true;
 //     } else {
@@ -575,22 +575,22 @@ Error create_object_ref_array(FxString *desc) {
 //         .passed = false 
 //     };
 
-//     DynArray* arr = dynarray_create(INT64, sizeof(Int64), 8);
-//     dynarray_push(arr, &(Int64){1});
-//     dynarray_push(arr, &(Int64){2});
-//     dynarray_push(arr, &(Int64){3});
-//     dynarray_push(arr, &(Int64){4});
-//     dynarray_push(arr, &(Int64){5});
+//     DynArray* arr = dynarray_create(INT64, sizeof(int64_t), 8);
+//     dynarray_push(arr, &(int64_t){1});
+//     dynarray_push(arr, &(int64_t){2});
+//     dynarray_push(arr, &(int64_t){3});
+//     dynarray_push(arr, &(int64_t){4});
+//     dynarray_push(arr, &(int64_t){5});
 
 //     Bool is_even(void* item) {
-//         return *(Int64*)item % 2 == 0;
+//         return *(int64_t*)item % 2 == 0;
 //     }
 
 //     DynArray* filtered = dynarray_filter(arr, is_even);
 
 //     if (filtered->len == 2 &&
-//         *(Int64*)dynarray_get(filtered, 0, &(Int64){0}) == 2 &&
-//         *(Int64*)dynarray_get(filtered, 1, &(Int64){0}) == 4
+//         *(int64_t*)dynarray_get(filtered, 0, &(int64_t){0}) == 2 &&
+//         *(int64_t*)dynarray_get(filtered, 1, &(int64_t){0}) == 4
 //     ) {
 //         res.passed = true;
 //     } else {
@@ -606,20 +606,20 @@ Error create_object_ref_array(FxString *desc) {
 //         .passed = false 
 //     };
 
-//     DynArray* arr = dynarray_create(INT64, sizeof(Int64), 8);
-//     dynarray_push(arr, &(Int64){5});
-//     dynarray_push(arr, &(Int64){3});
-//     dynarray_push(arr, &(Int64){1});
+//     DynArray* arr = dynarray_create(INT64, sizeof(int64_t), 8);
+//     dynarray_push(arr, &(int64_t){5});
+//     dynarray_push(arr, &(int64_t){3});
+//     dynarray_push(arr, &(int64_t){1});
 
 //     int cmp(const void* a, const void* b) {
-//         return *(Int64*)a - *(Int64*)b;
+//         return *(int64_t*)a - *(int64_t*)b;
 //     }
 
 //     DynArray* sorted = dynarray_sort(arr, cmp);
 
-//     Int64* out1 = dynarray_get(sorted, 0, &(Int64){0});
-//     Int64* out2 = dynarray_get(sorted, 1, &(Int64){0});
-//     Int64* out3 = dynarray_get(sorted, 2, &(Int64){0});
+//     int64_t* out1 = dynarray_get(sorted, 0, &(int64_t){0});
+//     int64_t* out2 = dynarray_get(sorted, 1, &(int64_t){0});
+//     int64_t* out3 = dynarray_get(sorted, 2, &(int64_t){0});
 
 //     if (sorted->len == 3 &&
 //         *out1 == 1 &&
@@ -640,34 +640,34 @@ Error create_object_ref_array(FxString *desc) {
 //         .passed = false 
 //     };
 
-//     DynArray* arr1 = dynarray_create(INT64, sizeof(Int64), 8);
-//     dynarray_push(arr1, &(Int64){1});
-//     dynarray_push(arr1, &(Int64){2});
-//     dynarray_push(arr1, &(Int64){3});
+//     DynArray* arr1 = dynarray_create(INT64, sizeof(int64_t), 8);
+//     dynarray_push(arr1, &(int64_t){1});
+//     dynarray_push(arr1, &(int64_t){2});
+//     dynarray_push(arr1, &(int64_t){3});
 
-//     DynArray* arr2 = dynarray_create(INT64, sizeof(Int64), 8);
-//     dynarray_push(arr2, &(Int64){1});
-//     dynarray_push(arr2, &(Int64){2});
-//     dynarray_push(arr2, &(Int64){3});
+//     DynArray* arr2 = dynarray_create(INT64, sizeof(int64_t), 8);
+//     dynarray_push(arr2, &(int64_t){1});
+//     dynarray_push(arr2, &(int64_t){2});
+//     dynarray_push(arr2, &(int64_t){3});
 
-//     DynArray* arr3 = dynarray_create(INT64, sizeof(Int64), 8);
-//     dynarray_push(arr3, &(Int64){1});
-//     dynarray_push(arr3, &(Int64){2});
+//     DynArray* arr3 = dynarray_create(INT64, sizeof(int64_t), 8);
+//     dynarray_push(arr3, &(int64_t){1});
+//     dynarray_push(arr3, &(int64_t){2});
 
-//     DynArray* arr4 = dynarray_create(INT64, sizeof(Int64), 8);
-//     dynarray_push(arr4, &(Int64){1});
-//     dynarray_push(arr4, &(Int64){3});
+//     DynArray* arr4 = dynarray_create(INT64, sizeof(int64_t), 8);
+//     dynarray_push(arr4, &(int64_t){1});
+//     dynarray_push(arr4, &(int64_t){3});
 
-//     DynArray* arr5 = dynarray_create(INT64, sizeof(Int64), 8);
-//     dynarray_push(arr5, &(Int64){1});
-//     dynarray_push(arr5, &(Int64){2});
+//     DynArray* arr5 = dynarray_create(INT64, sizeof(int64_t), 8);
+//     dynarray_push(arr5, &(int64_t){1});
+//     dynarray_push(arr5, &(int64_t){2});
 
-//     DynArray* arr6 = dynarray_create(INT64, sizeof(Int64), 8);
+//     DynArray* arr6 = dynarray_create(INT64, sizeof(int64_t), 8);
 //     dynarray_push(arr6, &(char[8]){"Hello"});
 //     dynarray_push(arr6, &(char[8]){"World"});
 
 //     Bool cmp(void* a, void* b) {
-//         return *(Int64*)a == *(Int64*)b;
+//         return *(int64_t*)a == *(int64_t*)b;
 //     }
 
 //     if (
@@ -690,20 +690,20 @@ Error create_object_ref_array(FxString *desc) {
 //         .passed = false 
 //     };
 
-//     DynArray* arr1 = dynarray_create(INT64, sizeof(Int64), 8);
-//     dynarray_push(arr1, &(Int64){1});
-//     dynarray_push(arr1, &(Int64){2});
-//     dynarray_push(arr1, &(Int64){3});
-//     dynarray_push(arr1, &(Int64){4});
-//     dynarray_push(arr1, &(Int64){5});
+//     DynArray* arr1 = dynarray_create(INT64, sizeof(int64_t), 8);
+//     dynarray_push(arr1, &(int64_t){1});
+//     dynarray_push(arr1, &(int64_t){2});
+//     dynarray_push(arr1, &(int64_t){3});
+//     dynarray_push(arr1, &(int64_t){4});
+//     dynarray_push(arr1, &(int64_t){5});
 
-//     DynArray* arr2 = dynarray_create(INT64, sizeof(Int64), 8);
-//     dynarray_push(arr2, &(Int64){3});
-//     dynarray_push(arr2, &(Int64){4});
+//     DynArray* arr2 = dynarray_create(INT64, sizeof(int64_t), 8);
+//     dynarray_push(arr2, &(int64_t){3});
+//     dynarray_push(arr2, &(int64_t){4});
 
-//     DynArray* arr3 = dynarray_create(INT64, sizeof(Int64), 8);
-//     dynarray_push(arr3, &(Int64){1});
-//     dynarray_push(arr3, &(Int64){2});
+//     DynArray* arr3 = dynarray_create(INT64, sizeof(int64_t), 8);
+//     dynarray_push(arr3, &(int64_t){1});
+//     dynarray_push(arr3, &(int64_t){2});
 
 //     if (
 //         dynarray_has_subarray(arr1, 2, arr2) &&
@@ -724,20 +724,20 @@ Error create_object_ref_array(FxString *desc) {
 //         .passed = false 
 //     };
 
-//     DynArray* arr = dynarray_create(INT64, sizeof(Int64), 8);
-//     dynarray_push(arr, &(Int64){1});
-//     dynarray_push(arr, &(Int64){2});
-//     dynarray_push(arr, &(Int64){3});
-//     dynarray_push(arr, &(Int64){4});
-//     dynarray_push(arr, &(Int64){5});
+//     DynArray* arr = dynarray_create(INT64, sizeof(int64_t), 8);
+//     dynarray_push(arr, &(int64_t){1});
+//     dynarray_push(arr, &(int64_t){2});
+//     dynarray_push(arr, &(int64_t){3});
+//     dynarray_push(arr, &(int64_t){4});
+//     dynarray_push(arr, &(int64_t){5});
 
 //     Bool cmp(void* a, void* b) {
-//         return *(Int64*)a == *(Int64*)b;
+//         return *(int64_t*)a == *(int64_t*)b;
 //     }
 
 //     size_t index;
 //     if (
-//         dynarray_find(arr, &index, &(Int64){3}, cmp) &&
+//         dynarray_find(arr, &index, &(int64_t){3}, cmp) &&
 //         index == 2
 //     ) {
 //         res.passed = true;
@@ -754,28 +754,28 @@ Error create_object_ref_array(FxString *desc) {
 //         .passed = false 
 //     };
 
-//     DynArray* arr = dynarray_create(INT64, sizeof(Int64), 8);
-//     dynarray_push(arr, &(Int64){1});
-//     dynarray_push(arr, &(Int64){2});
-//     dynarray_push(arr, &(Int64){3});
-//     dynarray_push(arr, &(Int64){4});
-//     dynarray_push(arr, &(Int64){5});
+//     DynArray* arr = dynarray_create(INT64, sizeof(int64_t), 8);
+//     dynarray_push(arr, &(int64_t){1});
+//     dynarray_push(arr, &(int64_t){2});
+//     dynarray_push(arr, &(int64_t){3});
+//     dynarray_push(arr, &(int64_t){4});
+//     dynarray_push(arr, &(int64_t){5});
 
-//     DynArray* new_arr = dynarray_create(INT64, sizeof(Int64), 8);
+//     DynArray* new_arr = dynarray_create(INT64, sizeof(int64_t), 8);
 
 //     // Take the new_arr as acc and add all items  with value * 2 to it
 //     void fn(size_t i, void* acc, void* item) {
-//         Int64 val = *(Int64*)item;
-//         dynarray_push((DynArray*)acc, &(Int64){val * 2});
+//         int64_t val = *(int64_t*)item;
+//         dynarray_push((DynArray*)acc, &(int64_t){val * 2});
 //     };
 
 //     dynarray_oneach(arr, (DynArray*)new_arr, fn);
 
-//     Int64* out1 = dynarray_get(new_arr, 0, &(Int64){0});
-//     Int64* out2 = dynarray_get(new_arr, 1, &(Int64){0});
-//     Int64* out3 = dynarray_get(new_arr, 2, &(Int64){0});
-//     Int64* out4 = dynarray_get(new_arr, 3, &(Int64){0});
-//     Int64* out5 = dynarray_get(new_arr, 4, &(Int64){0});
+//     int64_t* out1 = dynarray_get(new_arr, 0, &(int64_t){0});
+//     int64_t* out2 = dynarray_get(new_arr, 1, &(int64_t){0});
+//     int64_t* out3 = dynarray_get(new_arr, 2, &(int64_t){0});
+//     int64_t* out4 = dynarray_get(new_arr, 3, &(int64_t){0});
+//     int64_t* out5 = dynarray_get(new_arr, 4, &(int64_t){0});
 
 //     if (
 //         new_arr->len == 5 &&
@@ -799,16 +799,16 @@ Error create_object_ref_array(FxString *desc) {
 //         .passed = false 
 //     };
 
-//     DynArray* arr = dynarray_create(INT64, sizeof(Int64), 8);
-//     dynarray_push(arr, &(Int64){1});
-//     dynarray_push(arr, &(Int64){2});
-//     dynarray_push(arr, &(Int64){3});
+//     DynArray* arr = dynarray_create(INT64, sizeof(int64_t), 8);
+//     dynarray_push(arr, &(int64_t){1});
+//     dynarray_push(arr, &(int64_t){2});
+//     dynarray_push(arr, &(int64_t){3});
 
-//     Int64 sum = 0;
+//     int64_t sum = 0;
 
 //     // Take the sum as acc and add all items to it
 //     void fn(size_t i, void* acc, void* item) {
-//         *(Int64*)acc += *(Int64*)item;
+//         *(int64_t*)acc += *(int64_t*)item;
 //     };
 
 //     dynarray_oneach(arr, &sum, fn);

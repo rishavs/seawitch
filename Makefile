@@ -40,12 +40,10 @@ TEST_ENTRYPOINT	 = $(TEST_DIR)/runner.c
 
 # List of source files - MANUAL LISTING
 SRC_FILES = \
-	$(SRC_DIR)/core/sw_system.c \
-	$(SRC_DIR)/core/sw_string.c
+	$(SRC_DIR)/sw_core.c \
 
 TEST_FILES = \
-	$(SRC_DIR)/core/sw_system.c \
-	$(SRC_DIR)/core/sw_string.c \
+	$(SRC_DIR)/sw_core.c \
 	$(SRC_DIR)/compiler/compiler.c \
 	$(SRC_DIR)/compiler/lexer.c 
 

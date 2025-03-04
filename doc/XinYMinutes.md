@@ -4,7 +4,7 @@ There are 3 basic types in TypeScript
         Int8
         Int16
         Int32
-        Int64
+        int64_t
     Float
         Float64
     Bool
@@ -22,7 +22,7 @@ let name: String = "Anders";
 ```
 Type Aliases
 For convenience, Hexal also defines some simpler
-type Int = Int64
+type Int = int64_t
 type Float = Float64
 
 ```

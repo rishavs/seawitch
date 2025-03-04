@@ -10,7 +10,7 @@
 -- 1. Primary types and values.
 ----------------------------------------------------
 
-pub init myNum = 42 -- When using literals to create integers, you do not need to specify it type. It will be Int64 Internally. 
+pub init myNum = 42 -- When using literals to create integers, you do not need to specify it type. It will be int64_t Internally. 
 pub var myInt : Int32 = 42  -- Explicit type annotation
 
 inferredFLoat = 42.0  -- Again, you do not use to specify type of the variabl when using literals. This will be Float64 internally.

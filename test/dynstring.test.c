@@ -13,12 +13,12 @@ Error create_basic_dynstring(FxString* desc) {
 
     // Check for length
     size_t str_size = strlen(str->data);
-    Int64 len_via_strlen = (Int64)str_size;
+    int64_t len_via_strlen = (int64_t)str_size;
     if (str->len != 0 || str->len != len_via_strlen) {
         return snitch ("Length of new string is wrong", __LINE__, __FILE__);
     }
 
-    Int64 len_via_loop = 0;
+    int64_t len_via_loop = 0;
     while (str->data[len_via_loop] != '\0') {
         len_via_loop++;
     }
@@ -339,7 +339,7 @@ Error handle_invalid_inputs_for_checking_substring(FxString* desc) {
     *desc = fxstring_create("Dynstring: can handle invalid user inputs for hcecking substring");
     Error err;
 
-    // dynstring_substring_at(DynString* src, DynString* frag, Int64 pos, Bool* result)
+    // dynstring_substring_at(DynString* src, DynString* frag, int64_t pos, Bool* result)
 
     DynString* str = dynstring_create();
     err = dynstring_push_chars(str, "Hello, World!");
@@ -384,7 +384,7 @@ Error handle_invalid_inputs_for_checking_substring(FxString* desc) {
 //     if (!sub) return res;
 
 //     // Check for length
-//     Int64 j = 0;
+//     int64_t j = 0;
 //     while (sub->data[j] != '\0') {
 //         j++;
 //     }

@@ -1,14 +1,14 @@
 #include <stdio.h>
+#include <stdint.h>
 
-#include "sw_system.h"
-#include "sw_string.h"
+#include "sw_core.h"
 
 #include "seawitch.h"
-#include "compiler.h"
+#include "sw_compiler.h"
 
 typedef struct {
     Compiler_error* error;
-    DynString* desc;
+    char* desc;
 } Test_result;
 
 // Define a type for the test functions
@@ -18,7 +18,7 @@ typedef Test_result (*Spec)();
 Test_result must_pass_fun() {
     return (Test_result){
         .error = NULL,
-        .desc = dynstring_from_cstr("This test should pass")
+        .desc = "This test should pass"
     };
 }
 Test_result must_fail_fun() {
@@ -26,20 +26,20 @@ Test_result must_fail_fun() {
     // return snitch("This is a dummy error message", __LINE__, __FILE__);
     return (Test_result) {
         .error = snitch("This is a dummy error message", __FILE__, __LINE__),
-        .desc = dynstring_from_cstr("This test should fail")
+        .desc = "This test should fail"
     };
 }
 
 Test_result simple_var_declaration_as_int() {
     Test_result res = { 
-        .desc = dynstring_from_cstr("simple var declaration as int"),
+        .desc = "simple var declaration as int",
         .error = NULL
     };
 
     // Transpile the source
     Transpiler_context* ctx = transpiler_ctx_do_init(
-        dynstring_from_cstr("specs/basic.test.c"),
-        dynstring_from_cstr("let x = 3\n let y = 13")
+        "specs/basic.test.c",
+        "var x = 3\n var y = 13"
     );
     
     transpile_code(ctx);
@@ -50,8 +50,8 @@ Test_result simple_var_declaration_as_int() {
 // Helper types
 typedef struct
 {
-    Int64 x;
-    Int64 y;
+    int64_t x;
+    int64_t y;
 } Point;
 
 
@@ -109,8 +109,8 @@ Spec all_specs[] = {
 };
 
 int main() {
-    Int64 i = 0;
-    Int64 passed_count = 0;
+    int64_t i = 0;
+    int64_t passed_count = 0;
 
     printf("----------------------------------------------------\n");
     printf("Running Tests ...\n");
@@ -120,10 +120,10 @@ int main() {
         Spec current = all_specs[i];
         Test_result res = current();
         if (res.error) {
-            printf("\033[0;31m%lli:\t[ FAILED ]\t%s\n\033[0m", i, res.desc->data); // Red color for FAIL
+            printf("\033[0;31m%lli:\t[ FAILED ]\t%s\n\033[0m", i, res.desc); // Red color for FAIL
             yell(res.error);
         } else {
-            printf("\033[0;32m%lli: \t[ PASSED ]\t%s\n\033[0m", i, res.desc->data); // Green color for PASS
+            printf("\033[0;32m%lli: \t[ PASSED ]\t%s\n\033[0m", i, res.desc); // Green color for PASS
             passed_count++;
         }
         i++;

@@ -29,19 +29,19 @@ typedef struct {
     FxString* keys;
     Byte*   data; //data is stored as bytes
     Bool*   available;
-    // Int64*  probe_distance; // New: Probe distance array
-    // Int64*  hash_value; // New: Hash values array
-    Int64*  insert_order; // New: Insertion order array
+    // int64_t*  probe_distance; // New: Probe distance array
+    // int64_t*  hash_value; // New: Hash values array
+    int64_t*  insert_order; // New: Insertion order array
 
     Types   item_type;
-    Int64   item_size;
-    Int64   len;
-    Int64   capacity;
+    int64_t   item_size;
+    int64_t   len;
+    int64_t   capacity;
 } DynHashmap;
 
 // Create a new dictionary
 // Note: the dict will only grow, as required, and not shrink.
-DynHashmap* dynhashmap_create(Types value_type, Int64 value_size, Int64 initial_capacity);
+DynHashmap* dynhashmap_create(Types value_type, int64_t value_size, int64_t initial_capacity);
 
 Error dynhashmap_resize(DynHashmap* hashmap) ;
 // Set a key-value pair in the DynHashmap
@@ -60,7 +60,7 @@ Error dynhashmap_remove(DynHashmap* hashmap, const char* key, void* out);
 // Can be used for both mapping and reducing. 
 // For mapping, the acc is another hashmap
 // For reducing, the acc is any value type
-Error dynhashmap_oneach(DynHashmap* hmap, void* acc, Error (*fn)(Int64, Int64, void*, FxString, void*));
+Error dynhashmap_oneach(DynHashmap* hmap, void* acc, Error (*fn)(int64_t, int64_t, void*, FxString, void*));
 
 // Error dynhashmap_list_keys(DynHashmap* hmap, DynArray* keys);
 

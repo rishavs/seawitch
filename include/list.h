@@ -20,11 +20,11 @@
     typedef struct                                                                                            \
     {                                                                                                         \
         type *data;                                                                                           \
-        Int64 count;                                                                                          \
-        Int64 capacity;                                                                                       \
+        int64_t count;                                                                                          \
+        int64_t capacity;                                                                                       \
     } List_of_##name##_t;                                                                                     \
                                                                                                               \
-    static inline List_of_##name##_t *list_of_##name##_do_init(Int64 initial_capacity)                        \
+    static inline List_of_##name##_t *list_of_##name##_do_init(int64_t initial_capacity)                        \
     {                                                                                                         \
         List_of_##name##_t *list = calloc(1, sizeof(List_of_##name##_t));                                        \
         if (!list)                                                                                            \
@@ -40,7 +40,7 @@
         return list;                                                                                          \
     }                                                                                                         \
                                                                                                               \
-    static inline Int64 list_of_##name##_do_push(List_of_##name##_t *list, type item)                         \
+    static inline int64_t list_of_##name##_do_push(List_of_##name##_t *list, type item)                         \
     {                                                                                                         \
         if (!list)                                                                                            \
             return -1;                                                                                        \
@@ -76,7 +76,7 @@
         return true;                                                                                          \
     }                                                                                                         \
                                                                                                               \
-    static inline bool list_of_##name##_do_set(List_of_##name##_t *list, Int64 index, type item)              \
+    static inline bool list_of_##name##_do_set(List_of_##name##_t *list, int64_t index, type item)              \
     {                                                                                                         \
         if (!list || index < 0 || index >= list->count)                                                       \
             return false;                                                                                     \
@@ -84,19 +84,19 @@
         return true;                                                                                          \
     }                                                                                                         \
                                                                                                               \
-    static inline type *list_of_##name##_do_get(List_of_##name##_t *list, Int64 index)                        \
+    static inline type *list_of_##name##_do_get(List_of_##name##_t *list, int64_t index)                        \
     {                                                                                                         \
         if (!list || index < 0 || index >= list->count)                                                       \
             return NULL;                                                                                      \
         return &list->data[index];                                                                            \
     }                                                                                                         \
                                                                                                               \
-    static inline Int64 list_of_##name##_do_count(List_of_##name##_t *list)                                   \
+    static inline int64_t list_of_##name##_do_count(List_of_##name##_t *list)                                   \
     {                                                                                                         \
         return list ? list->count : 0;                                                                        \
     }                                                                                                         \
                                                                                                               \
-    static inline List_of_##name##_t *list_of_##name##_do_join(Int64 n, ...)                                  \
+    static inline List_of_##name##_t *list_of_##name##_do_join(int64_t n, ...)                                  \
     {                                                                                                         \
         if (n <= 0)                                                                                           \
         {                                                                                                     \
@@ -106,8 +106,8 @@
         va_list args;                                                                                         \
         va_start(args, n);                                                                                    \
                                                                                                               \
-        Int64 total_length = 0;                                                                               \
-        for (Int64 i = 0; i < n; i++)                                                                         \
+        int64_t total_length = 0;                                                                               \
+        for (int64_t i = 0; i < n; i++)                                                                         \
         {                                                                                                     \
             List_of_##name##_t *current_list = va_arg(args, List_of_##name##_t *);                            \
             if (!current_list)                                                                                \
@@ -126,12 +126,12 @@
         }                                                                                                     \
                                                                                                               \
         va_start(args, n);                                                                                    \
-        for (Int64 i = 0; i < n; i++)                                                                         \
+        for (int64_t i = 0; i < n; i++)                                                                         \
         {                                                                                                     \
             List_of_##name##_t *current_list = va_arg(args, List_of_##name##_t *);                            \
             if (current_list)                                                                                 \
             {                                                                                                 \
-                for (Int64 j = 0; j < current_list->count; j++)                                               \
+                for (int64_t j = 0; j < current_list->count; j++)                                               \
                 {                                                                                             \
                     if (list_of_##name##_do_push(joined_list, current_list->data[j]) == -1)                   \
                     {                                                                                         \
@@ -153,7 +153,7 @@
         String *result = string_init("[");                                                                    \
         if (!result)                                                                                          \
             return NULL;                                                                                      \
-        for (Int64 i = 0; i < list->count; i++)                                                               \
+        for (int64_t i = 0; i < list->count; i++)                                                               \
         {                                                                                                     \
             String item_str = to_string(list->data[i]);                                                       \
             if (!item_str)                                                                                    \
