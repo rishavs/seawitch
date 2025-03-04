@@ -1,80 +1,102 @@
-#include <stdbool.h>
-
-#include "ast.h"
-
 #ifndef SEAWITCH_COMPILER_H
 #define SEAWITCH_COMPILER_H
 
-// typedef enum Token_Type
-// {
-//     TOK_ILLEGAL,
-//     TOK_EOF,
-//     TOK_NEWLINE,
-//     TOK_SPACE,
-//     TOK_VAR,
-//     TOK_CONST,
-//     TOK_ASSIGN,
-//     TOK_INT_LIT,
-//     TOK_FLOAT_LIT,
-//     TOK_BOOL_LIT,
-//     TOK_ID,
-// } Token_Type;
+#include <stdbool.h>
+#include <stdio.h>
 
-typedef struct Compiler_Error {
-    char* type;
-    char* message;
-    int atPos;
-    int atLine;
-} Compiler_Error;
+#include "sw_system.h"
+#include "sw_string.h"
 
-typedef struct Compiler_Errors_List
-{
-    Compiler_Error* errors;
-    size_t count;
-    size_t capacity;
-} Compiler_Errors_List;
+#include "seawitch.h"
 
-void push_error(Compiler_Errors_List* , Compiler_Error );
+typedef enum {
+    TOKEN_VAR,
+    TOKEN_IDENTIFIER,
+    TOKEN_ASSIGN,
+    
+    TOKEN_INTEGER,
+    TOKEN_FLOAT,
+    TOKEN_STRING,
 
-int compile_file(char* filepath);
-char* read_file(char*);
+    TOKEN_PLUS,
+    TOKEN_MINUS,
+    TOKEN_MULTIPLY,
+    TOKEN_DIVIDE,
+    TOKEN_MODULUS,
 
-typedef struct Token
-{
-    // Token_Type type;
-    char* type;
-    char* value;
-    int atPos;
-    int atLine;
+    TOKEN_LPAREN,
+    TOKEN_RPAREN,
+} Token_kind;
+
+typedef struct {
+    Token_kind kind;
+
+    size_t start;
+    size_t end;
+
+    size_t line;
+    size_t column;
 } Token;
 
-typedef struct Tokens_List
-{
-    Token* tokens;
-    size_t count;
-    size_t capacity;
-} Tokens_List;
+typedef struct {
+    Compiler_error** error_refs_list;
+    size_t error_len;
+    size_t error_capacity;
 
-Compiler_Errors_List lex_file(Tokens_List*, char*);
+    DynString* filepath;
+    DynString* src;
 
-typedef struct Leaf {
-    char* type;
-    bool expr;
-    char* value;
+    Token* tokens_list;
+    size_t token_len;
+    size_t token_capacity;
+    
+    double reading_duration;
+    double lexing_duration;
+} Transpiler_context;
+void transpile_code (Transpiler_context* ctx) ;
+Transpiler_context* transpiler_ctx_do_init (DynString* filepath, DynString* src);
+void transpiler_ctx_do_push_error (Transpiler_context* ctx, Compiler_error* err);
+void transpiler_ctx_do_push_token (Transpiler_context* ctx, Token token);
 
-    size_t pos;
-    size_t line;
-    char* filename;
-    size_t depth;
+void lex_file(Transpiler_context* ctx);
+// char* read_file(char*);
 
-    struct Leaf* parent;
-    struct Leaf** children;
-    size_t children_count;
-    size_t children_capacity;
-} Leaf;
+// typedef struct Token
+// {
+//     // Token_Type type;
+//     char* type;
+//     char* value;
+//     int atPos;
+//     int atLine;
+// } Token;
 
-Compiler_Errors_List parse_file(Leaf*, Tokens_List*);
+// typedef struct Tokens_List
+// {
+//     Token* tokens;
+//     size_t count;
+//     size_t capacity;
+// } Tokens_List;
 
-void print_ast(Leaf*);
+// Compiler_Errors_List lex_file(Tokens_List*, char*);
+
+// typedef struct Leaf {
+//     char* type;
+//     bool expr;
+//     char* value;
+
+//     size_t pos;
+//     size_t line;
+//     char* filename;
+//     size_t depth;
+
+//     struct Leaf* parent;
+//     struct Leaf** children;
+//     size_t children_count;
+//     size_t children_capacity;
+// } Leaf;
+
+// Compiler_Errors_List parse_file(Leaf*, Tokens_List*);
+
+// void print_ast(Leaf*);
 
 #endif

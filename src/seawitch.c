@@ -2,9 +2,9 @@
 #include <string.h>
 #include <time.h>
 
-#include "../include/seawitch.h"
-#include "../include/compiler.h"
-
+#include "seawitch.h"
+#include "sw_string.h"
+#include "sw_system.h"
 
 int main(int argc, char* argv[]) {
 
@@ -19,6 +19,42 @@ int main(int argc, char* argv[]) {
     } else if (argc == 3 && strcmp(argv[1], "run") == 0) {
         printf("Compiling project with entrypoint file: %s\n", argv[2]);
         char* filepath = argv[2];
+        // filepath = "notes.txt";
+
+        // Open the file in read-only mode
+        FILE* file = fopen(filepath, "r");
+        if (!file) fatal_read_file_failure(__LINE__, __FILE__);
+
+        // Determine the file size
+        fseek(file, 0, SEEK_END);
+        size_t file_size = ftell(file);
+        fseek(file, 0, SEEK_SET);
+
+        // Allocate a string to hold the file contents
+        DynString* src = strict_calloc(1, sizeof(DynString));
+        src->len = file_size;
+        src->capacity = file_size + 1;       
+        src->data = strict_calloc(src->capacity, sizeof(char));
+
+        // Read the file src into the string
+        size_t bytes_read = fread(src->data, 1, file_size, file);
+        if (bytes_read < file_size) {
+            if (ferror(file)) {
+                perror("Error reading file");
+                fclose(file);
+                return 1;
+            } else if (feof(file)) {
+                printf("End of file reached\n");
+            }
+        }
+    
+        src->data[file_size] = '\0';
+
+        // Clean up
+        fclose(file);
+
+        printf("1. Reading File: %s\n----\n%s\n----\n", filepath, src->data);
+
         // int res = compile_file(filepath);
         
         return 0;

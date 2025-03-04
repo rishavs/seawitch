@@ -7,11 +7,11 @@
 #define SEAWITCH_VERSION "0.0.1"
 
 #define INITIAL_CAPACITY 8
-#define FIXED_STRING_SIZE 1024
+#define FIXED_STRING_SIZE 64
 
 typedef enum {
-    // Internal types
-    GEN_REF,
+    // Generic Reference
+    REF,
     
     // Value types
     BOOL,
@@ -43,9 +43,7 @@ typedef enum {
     OBJECT,
     REF_OBJECT,
 
-} Types;
-
-
+} Value_type;
 
 typedef uint8_t     Byte;
 // typedef Int64_t     Rune;
@@ -53,52 +51,27 @@ typedef int64_t     Int64;
 typedef double      Float64;
 typedef bool        Bool;
 
-typedef void*       Gen_ref;
+typedef void*       Ref;
 
 typedef struct {
     char*   data;
     Int64   len;
     Int64   capacity;
 } DynString;
+
 typedef struct {
-    Int64   len;
-    char    data[FIXED_STRING_SIZE];
-} FxString;
-FxString fxstring_create(char* frag);
-FxString fxstring_create_from_behind(char* frag);
+    DynString*  message;                // Error message
 
-// Error uses fixed strings to avoid dynamic memory allocation
-typedef struct {
-    Bool        ok;                     // Error status
-
-    FxString    message;                // Error message
-
-    FxString    name;                   // Error header. Optional
-    FxString    details;                // Optional
-    FxString    hint;                   // Optional
+    DynString*  name;                   // Error header. Optional
+    DynString*  details;                // Optional. cause. hint. etc.
 
     Int64       pos;                    // Error position provided by user. Optional
     Int64       line;                   // Error line number provided by user. Optional
     Int64       column;                 // Error column number provided by user. Optional
-    FxString    filepath;               // Error file path provided by user. Optional
+    DynString*  filepath;               // Error file path provided by user. Optional
     
-    Int64       raised_on_line;         // Internal compilar path for error.
-    FxString    raised_in_file;         // Internal compilar path for error.
-} Error;
+    Int64       raised_on_line;         // Internal compiler path for error.
+    DynString*  raised_in_file;         // Internal compiler path for error.
+} Compiler_error;
 
-#define DEFINE_RESULT(type, name) \
-    typedef struct { \
-        Bool    ok; \
-        union { \
-            type    value; \
-            Error   error; \
-        }; \
-    } Result_with_##name; 
-
-DEFINE_RESULT(Int64, int64)
-DEFINE_RESULT(Bool, bool)
-DEFINE_RESULT(Float64, float64)
-DEFINE_RESULT(FxString, fxstring)
-DEFINE_RESULT(DynString, dynstring)
-    
 #endif

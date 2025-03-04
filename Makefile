@@ -1,41 +1,100 @@
-# Compiler and compiler flags
+# Makefile for Sea Witch Project (Simplified - No Object Directory)
+
+# ------------------------------------------------------------------------------
+# Compiler and Flags
+# ------------------------------------------------------------------------------
+
 CC = clang
-CFLAGS = -std=c99 -Wall
+CFLAGS = -Wall -Wextra \
+		 -Wno-unused-variable -Wno-unused-parameter -Wno-unused-function \
+		 -Wno-sign-conversion -Wno-newline-eof -Wno-deprecated-declarations \
+		 -Wno-comment
 
-# Source files, header files, and output executable
-SRC_DIR 			= src
-TEST_DIR 			= spec
-INCLUDE_DIR 		= include
-BIN_DIR 			= bin
-PROJECT_EXECUTABLE 	= $(BIN_DIR)/seawitch
-TEST_EXECUTABLE 	= $(BIN_DIR)/test
-PROJECT_ENTRYPOINT 	= $(SRC_DIR)/seawitch.c
-TEST_ENTRYPOINT 	= $(TEST_DIR)/runner.c
+# Consider reviewing and removing -Wno-* flags. Suppressing warnings should be
+# done intentionally and with caution. It's often better to fix the cause
+# of the warning.
 
-# List of source files (each file on a new line)
-SRC = \
-    $(SRC_DIR)/errors.c \
-    $(SRC_DIR)/core/fxstring.c 
+# Optimization flags (can be added later for release builds, e.g., -O2 or -O3)
+# OPT_FLAGS = -O2
 
-# Targets
+# Debug flags (for debug builds, e.g., -g)
+DEBUG_FLAGS = -g
 
-all: build
+# Combine flags (currently using DEBUG_FLAGS, change to OPT_FLAGS for release)
+FLAGS = $(CFLAGS) $(DEBUG_FLAGS)
 
-run: build
-	$(PROJECT_EXECUTABLE)
 
-build: $(PROJECT_EXECUTABLE)
+# ------------------------------------------------------------------------------
+# Directories and Files
+# ------------------------------------------------------------------------------
 
-$(PROJECT_EXECUTABLE): $(SRC) $(PROJECT_ENTRYPOINT)
-	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) $(SRC) $(PROJECT_ENTRYPOINT) -o $(PROJECT_EXECUTABLE)
+SRC_DIR		 = src
+TEST_DIR		= test
+INCLUDE_DIR	 = include
+BIN_DIR		 = bin
 
-test: $(TEST_EXECUTABLE)
-	$(TEST_EXECUTABLE)
-	
-$(TEST_EXECUTABLE): $(SRC) $(TEST_ENTRYPOINT)
-    $(CC) $(CFLAGS) -I$(INCLUDE_DIR) $(SRC) $(TEST_ENTRYPOINT) -o $(TEST_EXECUTABLE)
+PROJECT_EXECUTABLE  = $(BIN_DIR)/seawitch.exe
+TEST_EXECUTABLE	 = $(BIN_DIR)/tests.exe
+PROJECT_ENTRYPOINT  = $(SRC_DIR)/seawitch.c
+TEST_ENTRYPOINT	 = $(TEST_DIR)/runner.c
+
+# List of source files - MANUAL LISTING
+SRC_FILES = \
+	$(SRC_DIR)/core/sw_system.c \
+	$(SRC_DIR)/core/sw_string.c
+
+TEST_FILES = \
+	$(SRC_DIR)/core/sw_system.c \
+	$(SRC_DIR)/core/sw_string.c \
+	$(SRC_DIR)/compiler/compiler.c \
+	$(SRC_DIR)/compiler/lexer.c 
+
+# ------------------------------------------------------------------------------
+# Targets - Build Process
+# ------------------------------------------------------------------------------
+
+all: clear build test # 'all' now builds both 'build' (compiler) and 'test'
+
+# Clear the terminal - convenience target
+clear:
+	@clear
+
+build: clear build_project # Builds the compiler
+
+test: clear build_tests	# Builds the test executable
+
+
+# ------------------------------------------------------------------------------
+# Build Project Executable (Compiler - 'build' target)
+# ------------------------------------------------------------------------------
+
+build_project: $(PROJECT_EXECUTABLE) # Internal target to build seawitch
+$(PROJECT_EXECUTABLE): $(SRC_FILES) $(PROJECT_ENTRYPOINT) # Direct compilation and linking
+	$(CC) $(FLAGS) -I$(INCLUDE_DIR) $(SRC_FILES) $(PROJECT_ENTRYPOINT) -o $(PROJECT_EXECUTABLE)
+	@echo "Project Executable (Compiler) built: $(PROJECT_EXECUTABLE)"
+
+
+# ------------------------------------------------------------------------------
+# Build Test Executable ('test' target)
+# ------------------------------------------------------------------------------
+
+build_tests: $(TEST_EXECUTABLE) # Internal target to build test
+$(TEST_EXECUTABLE): $(TEST_FILES) $(PROJECT_ENTRYPOINT) $(SRC_FILES) $(TEST_ENTRYPOINT) # Direct compilation and linking - now includes SRC_FILES for tests to link against
+	$(CC) $(FLAGS) -I$(INCLUDE_DIR) $(TEST_FILES) $(TEST_ENTRYPOINT) -o $(TEST_EXECUTABLE)
+	@echo "Test Executable built: $(TEST_EXECUTABLE)"
+
+
+# ------------------------------------------------------------------------------
+# Clean Target
+# ------------------------------------------------------------------------------
 
 clean:
-	rm -f $(PROJECT_EXECUTABLE) $(TEST_EXECUTABLE)
+	rm -f $(PROJECT_EXECUTABLE) $(TEST_EXECUTABLE) # Clean only executables now
+	@echo "Cleaned: Executables removed."
 
-.PHONY: all run build clean
+
+# ------------------------------------------------------------------------------
+# Phony Targets - Targets that are not files
+# ------------------------------------------------------------------------------
+
+.PHONY: all clear build test directories build_project build_tests clean
