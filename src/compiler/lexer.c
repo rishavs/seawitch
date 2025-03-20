@@ -3,9 +3,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "sw_core.h"
-#include "seawitch.h"
+#include "sw_bootstrap.h"
 #include "sw_compiler.h"
+#include "seawitch.h"
 
 bool substring_at(char* src, size_t start, size_t end, char* frag) {    
     size_t frag_len = strlen(frag);
@@ -16,20 +16,13 @@ bool substring_at(char* src, size_t start, size_t end, char* frag) {
     return true;
 }
 
-void transpiler_ctx_do_push_token (Transpiler_context* ctx, Token token) {
-    if (ctx->token_len >= ctx->token_capacity) {
-        ctx->token_capacity *= 2;
-        ctx->tokens_list = strict_realloc(ctx->tokens_list, ctx->token_capacity * sizeof(Token), __FILE__, __LINE__);
-    }
-    ctx->tokens_list[ctx->token_len] = token;
-    ctx->token_len++;
-}
-
-void lex_code(Transpiler_context* ctx) {
+void lex_code(Compiler_context* ctx) {
 
     size_t i = 0;
     size_t line = 0;
     size_t col = 0;
+
+    ctx->nodes_len = 0;
     
     while (i < ctx->src_len && ctx->src[i] != '\0') {
         // Handle whitespace
@@ -40,26 +33,25 @@ void lex_code(Transpiler_context* ctx) {
 
         // Handle operators
         } else if (substring_at(ctx->src, i, i + 1, "=")) {
-            Token token;
-            token.kind = TOKEN_ASSIGN;
-            token.start = i;
-            token.end = i + 1;
-            token.line = line;
-            token.column = col;
-            transpiler_ctx_do_push_token(ctx, token);
+            ctx->nodes_list[ctx->nodes_len].token_kind = TOKEN_ASSIGN;
+            ctx->nodes_list[ctx->nodes_len].line = line;
+            ctx->nodes_list[ctx->nodes_len].column = col;
+            ctx->nodes_list[ctx->nodes_len].start = i;
+            ctx->nodes_list[ctx->nodes_len].end = i + 1;
+
             i += 1; col += 1;
+            ctx->nodes_len++; 
 
         // Handle identifiers
         } else if (
             (ctx->src[i] >= 'a' && ctx->src[i] <= 'z') || 
             (ctx->src[i] >= 'A' && ctx->src[i] <= 'Z') ||
             (ctx->src[i] == '_')
-        ) {            
-            Token token;
-            token.start = i;
-            token.end = i;
-            token.line = line;
-            token.column = col;
+        ) {        
+            ctx->nodes_list[ctx->nodes_len].token_kind = TOKEN_IDENTIFIER;
+            ctx->nodes_list[ctx->nodes_len].line = line;
+            ctx->nodes_list[ctx->nodes_len].column = col;
+            ctx->nodes_list[ctx->nodes_len].start = i;
 
             while (
                 i < ctx->src_len && ctx->src[i] != '\0' && 
@@ -72,27 +64,23 @@ void lex_code(Transpiler_context* ctx) {
             ) {
                i++; col++;
             }
-            token.end = i;
-
-            if (substring_at(ctx->src, token.start, token.end, "var")) {
-                token.kind = TOKEN_VAR;
+            ctx->nodes_list[ctx->nodes_len].end = i;
+            
+            if (substring_at(ctx->src, ctx->nodes_list[ctx->nodes_len].start, ctx->nodes_list[ctx->nodes_len].end, "var")) {
+                ctx->nodes_list[ctx->nodes_len].token_kind = TOKEN_VAR;
             } else {
-                token.kind = TOKEN_IDENT;
+                ctx->nodes_list[ctx->nodes_len].token_kind = TOKEN_IDENTIFIER;
             }
-
-            transpiler_ctx_do_push_token(ctx, token);
+            ctx->nodes_len++;
 
         // handle ints, decimals & scientific notations
         } else if (
             (ctx->src[i] >= '0' && ctx->src[i] <= '9')
         ) {
-            Token token;
-            token.kind = TOKEN_INTEGER;
-            token.start = i;
-            token.end = i;
-            token.line = line;
-            token.column = col;
-
+            ctx->nodes_list[ctx->nodes_len].token_kind = TOKEN_INTEGER;
+            ctx->nodes_list[ctx->nodes_len].line = line;
+            ctx->nodes_list[ctx->nodes_len].column = col;
+            ctx->nodes_list[ctx->nodes_len].start = i; 
             while (i < ctx->src_len && ctx->src[i] != '\0' && 
                 (
                     (ctx->src[i] >= '0' && ctx->src[i] <= '9') || 
@@ -101,21 +89,43 @@ void lex_code(Transpiler_context* ctx) {
                 )
             ) {
                 if (ctx->src[i] == '.') {
-                    if (token.kind == TOKEN_DECIMAL) {
+                    if (ctx->nodes_list[ctx->nodes_len].token_kind == TOKEN_DECIMAL) {
                         break;
                     } else {
-                        token.kind = TOKEN_DECIMAL;
+                        ctx->nodes_list[ctx->nodes_len].token_kind = TOKEN_DECIMAL;
                     }
                 }
                 i++; col++;
             }
-            token.end = i;
-            transpiler_ctx_do_push_token(ctx, token);
+            ctx->nodes_list[ctx->nodes_len].end = i;
+            
+            ctx->nodes_len++;
           
         } else {
             // Raise Error
-            transpiler_ctx_do_push_error(ctx, snitch("Unknown token", __FILE__, __LINE__));
-            i++; col++;
+
+            ctx->errors_list[ctx->errors_len].line = line;
+            ctx->errors_list[ctx->errors_len].column = col;
+            ctx->errors_list[ctx->errors_len].filepath = ctx->filepath;
+
+            ctx->errors_list[ctx->errors_len].name = strict_calloc(64, sizeof(char), __FILE__, __LINE__);
+            strcpy(ctx->errors_list[ctx->errors_len].name, "Syntax Error");
+
+            ctx->errors_list[ctx->errors_len].message = strict_calloc(64, sizeof(char), __FILE__, __LINE__);
+            sprintf(ctx->errors_list[ctx->errors_len].message, "Illegal character '%c'", ctx->src[i]);
+            
+            ctx->errors_len++;
+
+            // skip chracters until next whitespace or newline
+            while (
+                i < ctx->src_len 
+                && ctx->src[i] != '\0' 
+                && ctx->src[i] != ' ' 
+                && ctx->src[i] != '\n'
+                && ctx->src[i] != '\t'
+            ) {
+                i++; col++;
+            }
         }
     }  
 

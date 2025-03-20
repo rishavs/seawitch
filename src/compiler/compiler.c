@@ -3,62 +3,50 @@
 #include <string.h>
 #include <time.h>
 
-#include "sw_core.h"
-
-#include "seawitch.h"
+#include "sw_bootstrap.h"
 #include "sw_compiler.h"
+#include "seawitch.h"
 
-Transpiler_context* transpiler_ctx_do_init (char* filepath, char* src) {
-    Transpiler_context* ctx = strict_calloc(1, sizeof(Transpiler_context), __FILE__, __LINE__);
-    ctx->error_capacity = 8;
-    ctx->error_len = 0;
-    ctx->error_refs_list = strict_calloc(ctx->error_capacity, sizeof(Compiler_error), __FILE__, __LINE__);
+Compiler_context* transpiler_ctx_do_init (char* filepath, char* src) {
+    Compiler_context* ctx = strict_calloc(1, sizeof(Compiler_context), __FILE__, __LINE__);
 
     ctx->filepath = filepath;
-    ctx->filepath_len = strlen(filepath);
     ctx->src = src;
     ctx->src_len = strlen(src);
-    ctx->reading_duration = 0;
-    
-    ctx->token_capacity = 8;
-    ctx->token_len = 0;
-    ctx->tokens_list = strict_calloc(ctx->token_capacity, sizeof(Token), __FILE__, __LINE__);
-    ctx->lexing_duration = 0;
 
-    ctx->ast = strict_calloc(1, sizeof(ASTNode), __FILE__, __LINE__);
-    ctx->ast->kind = ASTNODE_PROGRAM;
-    ctx->ast->props.Program.filepath = 
-    ctx->parsing_duration = 0;
+    // for speed & simplicity, assume that max nodes = number of chars / 2
+    // As we can grow the array later if needed, this is not a problem.
+    ctx->nodes_capacity = ctx->src_len / 2;
+    ctx->nodes_len = 0;
+    ctx->nodes_list = strict_calloc(ctx->nodes_capacity, sizeof(Node*), __FILE__, __LINE__);
+    
+    // For errors, assume a max of 100 errors
+    ctx->errors_capacity = 100;
+    ctx->errors_len = 0;
+    ctx->errors_list = strict_calloc(ctx->errors_capacity, sizeof(CError*), __FILE__, __LINE__);
 
     return ctx;
 }
 
-void transpiler_ctx_do_push_error (Transpiler_context* ctx, Compiler_error* err) {
-    if (ctx->error_len >= ctx->error_capacity) {
-        ctx->error_capacity *= 2;
-        ctx->error_refs_list = strict_realloc(ctx->error_refs_list, ctx->error_capacity * sizeof(Compiler_error*), __FILE__, __LINE__);
-    }
-    ctx->error_refs_list[ctx->error_len] = err;
-    ctx->error_len++;
-}
-
-void print_tokens(Transpiler_context* ctx) {
+void print_tokens(Compiler_context* ctx) {
     puts("----");
-    printf("Lexer: (num tokens = %zu)\n----\n[\n", ctx->token_len);
-    for (size_t i = 0; i < ctx->token_len; i++) {
+    printf("Lexer: (num tokens = %zu)\n----\n[\n", ctx->nodes_len);
+    for (size_t i = 0; i < ctx->nodes_len; i++) {
         printf("\t");
-        for (size_t j = ctx->tokens_list[i].start; j < ctx->tokens_list[i].end; j++) {
+        for (size_t j = ctx->nodes_list[i].start; j < ctx->nodes_list[i].end; j++) {
             printf("%c", ctx->src[j]);
         }
-        printf("\t%s, \tline: %zu, \tcol: %zu,\n",
-            Token_kind_strings[ctx->tokens_list[i].kind],
-            ctx->tokens_list[i].line, 
-            ctx->tokens_list[i].column
+        printf("\t%s, %zu:%zu,\n",
+            Token_kind_strings[ctx->nodes_list[i].token_kind],
+            ctx->nodes_list[i].line, 
+            ctx->nodes_list[i].column
         );
     }
+    printf("]\n");
+    printf("Count of Lexing errors = %zu\n", ctx->errors_len);
 }
 
-void transpile_code (Transpiler_context* ctx) {
+void transpile_code (Compiler_context* ctx) {
     // Start the clock
     clock_t t;
     t = clock();
@@ -66,21 +54,19 @@ void transpile_code (Transpiler_context* ctx) {
     // -------------------------------
     // Lex Source
     // -------------------------------
-    transpiler_ctx_do_push_error(ctx, snitch("TODO", __FILE__, __LINE__));
-
-    printf("Reader: (File: %s)\n----\n%s\n", ctx->filepath, ctx->src);
     lex_code(ctx);
-    print_tokens(ctx);
 
     t = clock() - t;
     ctx->lexing_duration = ((double)t)/CLOCKS_PER_SEC; // in seconds
-    printf("\n]\nTime Taken for Lexing source = %f", ctx->lexing_duration);
+    printf("\nTime Taken for Lexing source = %f\n", ctx->lexing_duration);
+    print_tokens(ctx);
 
     // -------------------------------
     // Parse Tokens
     // -------------------------------
-    parse_code(ctx);
+    // parse_code(ctx);
 }
+
 
 
 // #include "../include/ast.h"

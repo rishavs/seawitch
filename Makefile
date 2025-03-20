@@ -28,22 +28,22 @@ FLAGS = $(CFLAGS) $(DEBUG_FLAGS)
 # Directories and Files
 # ------------------------------------------------------------------------------
 
-SRC_DIR		 = src
-TEST_DIR		= test
+SRC_DIR		= src
+TEST_DIR	= test
 INCLUDE_DIR	 = include
 BIN_DIR		 = bin
 
 PROJECT_EXECUTABLE  = $(BIN_DIR)/seawitch.exe
-TEST_EXECUTABLE	 = $(BIN_DIR)/tests.exe
+TEST_EXECUTABLE	 	= $(BIN_DIR)/tests.exe
 PROJECT_ENTRYPOINT  = $(SRC_DIR)/seawitch.c
-TEST_ENTRYPOINT	 = $(TEST_DIR)/runner.c
+TEST_ENTRYPOINT	 	= $(TEST_DIR)/runner.c
 
 # List of source files - MANUAL LISTING
 SRC_FILES = \
-	$(SRC_DIR)/sw_core.c \
+	$(SRC_DIR)/bootstrap.c \
 
 TEST_FILES = \
-	$(SRC_DIR)/sw_core.c \
+	$(SRC_DIR)/bootstrap.c \
 	$(SRC_DIR)/compiler/compiler.c \
 	$(SRC_DIR)/compiler/lexer.c 
 

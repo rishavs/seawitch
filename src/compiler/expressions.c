@@ -1,7 +1,14 @@
+#include <stdlib.h>
 
-ASTNode* parse_expression(Parsing_context* ctx);
+#include "sw_core.h"
 
-ASTNode* parse_integer (Parsing_context* ctx) {
+#include "seawitch.h"
+#include "sw_compiler.h"
+
+// Forward declaration
+ASTNode* parse_expression(Transpiler_context* ctx);
+
+ASTNode* parse_integer (Transpiler_context* ctx) {
     Token* token = ctx->tokens->items[ctx->i];
     ASTNode* int_ASTNode = (ASTNode*)malloc(sizeof(ASTNode));
     if (!int_ASTNode) {
@@ -19,7 +26,7 @@ ASTNode* parse_integer (Parsing_context* ctx) {
     return int_ASTNode;
 };
 
-ASTNode* parse_decimal (Parsing_context* ctx) {
+ASTNode* parse_decimal (Transpiler_context* ctx) {
     Token* token = ctx->tokens->items[ctx->i];
     ASTNode* dec_ASTNode = (ASTNode*)malloc(sizeof(ASTNode));
     if (!dec_ASTNode) {
@@ -37,7 +44,7 @@ ASTNode* parse_decimal (Parsing_context* ctx) {
     return dec_ASTNode;
 };
 
-ASTNode* parse_identifier (Parsing_context* ctx) {
+ASTNode* parse_identifier (Transpiler_context* ctx) {
     Token* token = ctx->tokens->items[ctx->i];
     ASTNode* ident_ASTNode = (ASTNode*)malloc(sizeof(ASTNode));
     if (!ident_ASTNode) {
@@ -55,7 +62,7 @@ ASTNode* parse_identifier (Parsing_context* ctx) {
     return ident_ASTNode;
 };
 
-ASTNode* parse_primary_expression(Parsing_context* ctx) {
+ASTNode* parse_primary_expression(Transpiler_context* ctx) {
     Token* token = ctx->tokens->items[ctx->i];
     if (token->kind == TOKEN_INTEGER) {
         return parse_integer(ctx);
@@ -73,7 +80,7 @@ ASTNode* parse_primary_expression(Parsing_context* ctx) {
 }
 
 
-ASTNode* parse_expression(Parsing_context* ctx) {
+ASTNode* parse_expression(Transpiler_context* ctx) {
     if (ctx->i >= ctx->tokens->length) {
         size_t lastLine = ((Token*)ctx->tokens->items[ctx->tokens->length - 1])->line;
         size_t lastPos = ((Token*)ctx->tokens->items[ctx->tokens->length - 1])->pos;

@@ -1,13 +1,14 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <time.h>
 
-#include "sw_core.h"
-
-#include "seawitch.h"
+#include "sw_bootstrap.h"
 #include "sw_compiler.h"
+#include "seawitch.h"
 
 typedef struct {
-    Compiler_error* error;
+    CError* error;
     char* desc;
 } Test_result;
 
@@ -22,37 +23,40 @@ Test_result must_pass_fun() {
     };
 }
 Test_result must_fail_fun() {
-    // desc = dynstring_from_cstr("This test should fail");
-    // return snitch("This is a dummy error message", __LINE__, __FILE__);
     return (Test_result) {
-        .error = snitch("This is a dummy error message", __FILE__, __LINE__),
+        .error = snitch("UNKNOWN ERROR", "This is a dummy error message", __FILE__, __LINE__),
         .desc = "This test should fail"
     };
 }
 
 Test_result simple_var_declaration_as_int() {
     Test_result res = { 
-        .desc = "simple var declaration as int",
+        .desc = "Simple variable declaration as int",
         .error = NULL
     };
 
     // Transpile the source
-    Transpiler_context* ctx = transpiler_ctx_do_init(
-        "specs/basic.test.c",
-        "var x = 3\n var y = 13"
+    Compiler_context* ctx = transpiler_ctx_do_init(
+        "test.sw",
+        "va@r x = 3\nvar y = 13"
     );
     
     transpile_code(ctx);
-    
+    // if (ctx->errors_len > 0) {
+    //     for (size_t i = 0; i < ctx->errors_len; i++) {
+    //         printf("Error %zu: %s\n", ctx->errors_len, ctx->errors_list[i].message);
+
+    //     }
+    // } 
     return res;
 }
 
 // Helper types
-typedef struct
-{
-    int64_t x;
-    int64_t y;
-} Point;
+// typedef struct
+// {
+//     int64_t x;
+//     int64_t y;
+// } Point;
 
 
 // create a list of test functions like must_pass_fun, must_fail_fun, etc.
@@ -118,17 +122,24 @@ int main() {
 
     while (all_specs[i] != NULL) {
         Spec current = all_specs[i];
+        // Start the clock
+        clock_t t;
+        t = clock();
+
         Test_result res = current();
+
+        double duration = clock() - t;
+
         if (res.error) {
-            printf("\033[0;31m%lli:\t[ FAILED ]\t%s\n\033[0m", i, res.desc); // Red color for FAIL
+            printf("\033[0;31m%zu: FAILED | %s | %s\n\033[0m", i, format_duration(duration), res.desc); // Red color for FAIL
             yell(res.error);
         } else {
-            printf("\033[0;32m%lli: \t[ PASSED ]\t%s\n\033[0m", i, res.desc); // Green color for PASS
+            printf("\033[0;32m%zu: PASSED | %s | %s\n\033[0m", i, format_duration(duration), res.desc); // Green color for PASS
             passed_count++;
         }
         i++;
     }
     printf("----------------------------------------------------\n");
-    printf("Total: %lli, Passed: %lli, Failed: %lli \n", i, passed_count, i-passed_count);
+    printf("Total: %zu, Passed: %zu, Failed: %zu \n", i, passed_count, i-passed_count);
     return 0;
 }

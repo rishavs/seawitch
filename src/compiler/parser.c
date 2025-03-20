@@ -1,112 +1,146 @@
+#include <stdlib.h>
 
-Node* parse_declaration(Parsing_context* ctx) {
-    Token* token = ctx->tokens->items[ctx->i];
+#include "sw_core.h"
 
-    Node* decl_node = (Node*)malloc(sizeof(Node));
-    if (!decl_node) {
-        perror("Failed to allocate memory for declaration node");
-        exit(EXIT_FAILURE);
+#include "seawitch.h"
+#include "sw_compiler.h"
+
+// Forward declaration
+ASTNode* parse_expression(Transpiler_context* ctx, size_t* i, Compiler_error* err);
+
+ASTNode* parse_integer (Transpiler_context* ctx, size_t* i, Compiler_error* err) {
+    Token* token = ctx->tokens_list[i];
+    ASTNode* int_node = strict_calloc(sizeof(ASTNode), __FILE__, __LINE__);
+    int_node->kind      = ASTNODE_INTEGER;
+
+    int_node->start     = token->start;
+    int_node->end       = token->end;
+    int_node->line      = token->line;
+    int_node->column    = token->column;
+
+    i++;
+    return int_node;
+};
+
+ASTNode* parse_identifier (Transpiler_context* ctx, size_t* i, Compiler_error* err) {
+    Token* token = ctx->tokens_list[i];
+    ASTNode* ident_node = strict_calloc(sizeof(ASTNode), __FILE__, __LINE__);
+    ident_node->kind      = ASTNODE_IDENTIFIER;
+
+    ident_node->start     = token->start;
+    ident_node->end       = token->end;
+    ident_node->line      = token->line;
+    ident_node->column    = token->column;
+
+    i++;
+    return ident_node;
+};
+
+ASTNode* parse_primary_expression (Transpiler_context* ctx, size_t* i, Compiler_error* err) {
+    Token* token = ctx->tokens_list[i];
+
+    switch (token->kind) {
+    case TOKEN_INTEGER:
+        return parse_integer(ctx, i, err);
+        break;
+    
+    case TOKEN_IDENTIFIER:
+        return parse_identifier(ctx, i, err);
+        break;
+
+    default:
+        Compiler_error* err = strict_calloc(sizeof(Compiler_error), __FILE__, __LINE__);
+        err->name = dynstring_do_create("SyntaxError");
+        DynString* token_value = dynstring_do_get_substring(ctx->src, token->start, token->end);
+
+        err->message = dynstring_do_create(sprintf("Expected a primary expression, but instead found "%s\"", token_value->data));
+        err->line = token->line;
+        err->column = token->column;
+        err->filepath = ctx->filepath;
+        err->raised_on_line = __LINE__;
+        err->raised_in_file = dynstring_do_create(__FILE__);
+        transpiler_ctx_do_push_error(ctx, err);
     }
-    decl_node->kind = NODE_DECLARATION;
+    return NULL;
+}
+
+ASTNode* parse_expression(Transpiler_context* ctx, size_t* i, Compiler_error* err) {
+    Token* token = ctx->tokens_list[i];
+    ASTNode* expr_node = parse_primary_expression(ctx, i, err);
+    
+    return expr_node;
+}
+
+ASTNode* parse_declaration(Transpiler_context* ctx, size_t* i, Compiler_error* err) {
+    Token* token = ctx->tokens_list[i];
+
+    ASTNode* decl_node = strict_calloc(sizeof(ASTNode), 1, __FILE__, __LINE__);
+    decl_node->kind = ASTNODE_DECLARATION;
+    decl_node->start = token->start;
+    decl_node->end = token->end;
     decl_node->line = token->line;
-    decl_node->pos = token->pos;
-    decl_node->depth = ctx->current_depth;
-    decl_node->scope_owner = ctx->current_scope_owner;
-
-    if (token->kind == TOKEN_LET) {
-        decl_node->Node_Declaration.is_new = true;
-        ctx->i++; // Consume 'let'
-        token = ctx->tokens->items[ctx->i];
-    }
+    decl_node->column = token->column;
 
     if (token->kind == TOKEN_VAR) {
-        decl_node->Node_Declaration.is_var = true;
-        ctx->i++; // Consume 'var'
-        token = ctx->tokens->items[ctx->i];
+        decl_node->props.Declaration.is_var = true;
+    } else if (token->kind == TOKEN_CONST) {
+        decl_node->props.Declaration.is_var = false;
+    } else {
+        Compiler_error* err = strict_calloc(sizeof(Compiler_error), __FILE__, __LINE__);
+        err->name = dynstring_do_create("SyntaxError");
+        err->message = dynstring_do_create(sprintf("Expected a declaration, but instead found "%s\"", token->value));
+        err->line = token->line;
+        err->column = token->column;
+        err->filepath = ctx->filepath;
+        err->raised_on_line = __LINE__;
+        err->raised_in_file = dynstring_do_create(__FILE__);
+        transpiler_ctx_do_push_error(ctx, err);
     }
 
+    i++; // move to the next token
+    if (i >= ctx->tokens->length) {
+        Compiler_error* err = strict_calloc(sizeof(Compiler_error), __FILE__, __LINE__);
+        err->name = dynstring_do_create("SyntaxError");
+        err->message = dynstring_do_create("Expected an identifier, but instead reached the end source code");
+        err->line = token->line;
+        err->column = token->column;
+        err->filepath = ctx->filepath;
+        err->raised_on_line = __LINE__;
+        err->raised_in_file = dynstring_do_create(__FILE__);
+        transpiler_ctx_do_push_error(ctx, err);
+    }
+    token = ctx->tokens_list[i];
     if (token->kind != TOKEN_IDENTIFIER) {
-        add_error_to_list(ctx->errors, "SyntaxError", "Invalid Declaration", "Expected an identifier in the declaration", ctx->filepath, token->line, token->pos, __FILE__, __LINE__);
+        Compiler_error* err = strict_calloc(sizeof(Compiler_error), __FILE__, __LINE__);
+        err->name = dynstring_do_create("SyntaxError");
+        err->message = dynstring_do_create(sprintf("Expected an identifier, but instead found "%s\"", token->value));
+        err->line = token->line;
+        err->column = token->column;
+        err->filepath = ctx->filepath;
+        err->raised_on_line = __LINE__;
+        err->raised_in_file = dynstring_do_create(__FILE__);
+        transpiler_ctx_do_push_error(ctx, err);
     }
+    decl_node->props.Declaration.identifier_node = parse_identifier(ctx, i, err);
+    if (err)
 
-    Node* ident_node = parse_identifier(ctx);
-    if (!ident_node) {
-        perror("Failed to parse identifier in declaration");
-        return NULL;
-    }
-    decl_node->Node_Declaration.identifier = ident_node;
-    token = ctx->tokens->items[ctx->i];
-
-    // if there is an assignment operator, parse the expression
-    // else return the declaration node
-
-    if (token->kind != TOKEN_ASSIGN) {
-        decl_node->Node_Declaration.is_assignment = false;
-        return decl_node;
-    }
-
-    decl_node->Node_Declaration.is_assignment = true;
-    ctx->i++; // Consume '='
-    Node* expr_node = parse_expression(ctx);
-    if (!expr_node) {
-        perror("Failed to parse expression in declaration");
-        return NULL;
-    }
-    decl_node->Node_Declaration.expr = expr_node;
-    return decl_node;
 }
 
-Node* parse_return(Parsing_context* ctx) {
-    ctx->i++;  // Consume 'return'
-
-    if (ctx->i >= ctx->tokens->length) {
-        size_t lastLine = ((Token*)ctx->tokens->items[ctx->tokens->length - 1])->line;
-        size_t lastPos = ((Token*)ctx->tokens->items[ctx->tokens->length - 1])->pos;
-        
-        add_error_to_list(ctx->errors, "SyntaxError", "Incomplete Return Statement", "Expected an expression after the 'return' statement", ctx->filepath, lastLine, lastPos, __FILE__, __LINE__);
-        perror("Expected an expression after the 'return' statement");
-        return NULL;
-    }
-
-    Node* expr_node = parse_expression(ctx);
-    if (!expr_node) {
-        perror("Failed to parse expression in return statement");
-        return NULL;
-    }
-    
-    Node* ret_node = (Node*)malloc(sizeof(Node));
-    if (!ret_node) {
-        perror("Failed to allocate memory for return statement");
-        exit(EXIT_FAILURE);
-    }
-    expr_node->parent = ret_node;
-
-    ret_node->kind = NODE_RETURN;
-    ret_node->line = expr_node->line;
-    ret_node->pos = expr_node->pos;
-    ret_node->Node_Return.expr = expr_node;
-
-    ret_node->depth = ctx->current_depth;
-    ret_node->scope_owner = ctx->current_scope_owner;
-
-    return ret_node;
-}
-
-List* parse_block(Parsing_context* ctx) {
-    List* block = list_init("List<Node>");
+ASTNode* parse_block(Transpiler_context* ctx, size_t* i, Compiler_error* err) {
+    List* block = list_init("List<ASTNode>");
 
     bool in_recovery_loop = false;
 
     // increment the depth
     ctx->current_depth++;
 
-    while (ctx->i < ctx->tokens->length) {
-        Token* token = ctx->tokens->items[ctx->i];
-        Token* next_token = ctx->i + 1 < ctx->tokens->length ? ctx->tokens->items[ctx->i + 1] : NULL;
+    while (i < ctx->tokens->length) {
+        Token* token = ctx->tokens->items[i];
+        Token* next_token = i + 1 < ctx->tokens->length ? ctx->tokens->items[i + 1] : NULL;
         in_recovery_loop = false;
 
         if (token->kind == TOKEN_LET || token->kind == TOKEN_VAR) {
-            Node* decl_node = parse_declaration(ctx);
+            ASTNode* decl_node = parse_declaration(ctx);
             if (!decl_node) {
                 in_recovery_loop = true;
                 return block;
@@ -114,7 +148,7 @@ List* parse_block(Parsing_context* ctx) {
             list_push(block, decl_node);
 
         } else if (token->kind == TOKEN_IDENTIFIER && next_token && next_token->kind == TOKEN_ASSIGN) {
-            Node* decl_node = parse_declaration(ctx);
+            ASTNode* decl_node = parse_declaration(ctx);
             if (!decl_node) {
                 in_recovery_loop = true;
                 return block;
@@ -122,7 +156,7 @@ List* parse_block(Parsing_context* ctx) {
             list_push(block, decl_node);
 
         } else if (token->kind == TOKEN_RETURN) {
-            Node* ret_node = parse_return(ctx);
+            ASTNode* ret_node = parse_return(ctx);
             if (!ret_node) {
                 in_recovery_loop = true;
                 return block;
@@ -144,7 +178,7 @@ List* parse_block(Parsing_context* ctx) {
                 perror(err_msg);
                 add_error_to_list(ctx->errors, "SyntaxError", "Unexpected Token", err_msg,  ctx->filepath, token->line, token->pos, __FILE__, __LINE__);
             }
-            ctx->i++;
+            i++;
         }
     }
     // decrement the depth
@@ -153,30 +187,18 @@ List* parse_block(Parsing_context* ctx) {
     return block;
 }
 
-bool parse_code(List* errors, Node* program, List* tokens, char* filepath) {
-    size_t current_error_count = errors->length;
+void parse_code(Transpiler_context* ctx) {
 
-    Parsing_context* ctx = (Parsing_context*)malloc(sizeof(Parsing_context));
-    if (!ctx) {
-        perror("Failed to allocate memory for parser context");
-        exit(EXIT_FAILURE);
-    }
-    ctx->current_depth          = 0;
-    ctx->errors                 = errors;
-    ctx->tokens                 = tokens;
-    ctx->filepath               = filepath;
-    ctx->i                      = 0;
-    ctx->current_scope_owner    = program;
+    size_t i = 0; // token index
 
-    List* statements = parse_block(ctx);
-    for (size_t j = 0; j < statements->length; j++) {
-        Node* stmt = statements->items[j];
-        stmt->parent = program;
-        stmt->depth = 1;
+    ASTNode* block = parse_block(ctx, &i, NULL);
+    for (size_t j = 0; j < block->props.Block.statements_len; j++) {
+        ASTNode* stmt = block->props.Block.statements_list[j];
+        stmt->parent = ctx->ast;
+        stmt->scope_owner = ctx->ast;
+        stmt->depth = 0;
     }
 
     printf("\nNumber of Statements: %zu\n", statements->length);
-    program->Node_Program.block = statements;
-
-    return errors->length == current_error_count;
+    ctx->ast->props.Program.block_node = block;
 }
